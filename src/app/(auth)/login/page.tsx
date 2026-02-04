@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { loginAction } from "@/actions/auth.actions";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,22 +29,21 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await signIn("credentials", {
-        email,
-        password,
-        redirectTo: "/portal/dashboard",
-      });
+      const result = await loginAction(email, password);
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+      }
+      // If no error, the server action redirects automatically
     } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
+      // NEXT_REDIRECT throws - this is expected on successful login
+      router.push("/portal/dashboard");
     }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
-        {/* Branding */}
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Cocoon Gym
@@ -52,7 +53,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Login Card */}
         <Card className="border-border/50 bg-card">
           <form onSubmit={handleSubmit}>
             <CardHeader className="space-y-1">

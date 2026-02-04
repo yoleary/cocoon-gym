@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { signIn, signOut } from "@/lib/auth";
+import { AuthError } from "next-auth";
 
 export async function loginAction(email: string, password: string) {
   try {
@@ -11,10 +12,16 @@ export async function loginAction(email: string, password: string) {
       password,
       redirectTo: "/portal/dashboard",
     });
-  } catch (error: any) {
-    if (error?.type === "CredentialsSignin") {
-      return { error: "Invalid email or password" };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return { error: "Invalid email or password" };
+        default:
+          return { error: "Something went wrong" };
+      }
     }
+    // NEXT_REDIRECT error - rethrow so Next.js handles the redirect
     throw error;
   }
 }
@@ -25,7 +32,6 @@ export async function registerAction(
   password: string,
   token?: string
 ) {
-  // Verify invitation token
   if (token) {
     const verification = await db.verificationToken.findFirst({
       where: { token, expires: { gt: new Date() } },
@@ -33,7 +39,6 @@ export async function registerAction(
     if (!verification) {
       return { error: "Invalid or expired invitation link" };
     }
-    // Delete the used token
     await db.verificationToken.delete({
       where: {
         identifier_token: {
