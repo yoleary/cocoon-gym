@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/site/navbar";
 import { Footer } from "@/components/site/footer";
 import {
@@ -47,22 +48,22 @@ const values = [
 
 const trainers = [
   {
-    name: "Daan de Vries",
-    role: "Head Coach & Founder",
-    credentials: "BSc Sports Science, NSCA-CSCS",
-    bio: "Daan founded Cocoon Gym in 2017 after a decade of coaching professional athletes and everyday clients across the Netherlands. His passion is making high-level coaching accessible to everyone. Specialities include strength programming, athletic performance, and post-rehabilitation training.",
+    name: "Paul Stribling",
+    role: "Owner & Coach",
+    credentials: "Qualified PT & Sports Therapist",
+    experience: "16 Years Experience",
+    favExercise: "Front Squat",
+    image: "/images/paul-stribling.webp",
+    bio: "Paul is the founder and head coach of Cocoon Gym. With 16 years of experience as a qualified Personal Trainer and Sports Therapist, he brings a wealth of knowledge in strength programming, injury prevention, and rehabilitation. His coaching philosophy centres on building a strong foundation through compound movements, progressive overload, and individualised programming. Whether you're a complete beginner or an experienced lifter, Paul's hands-on approach ensures every session is purposeful and moves you closer to your goals.",
   },
   {
-    name: "Lisa Mulder",
-    role: "Senior Personal Trainer",
-    credentials: "MSc Exercise Physiology, Pn1 Nutrition",
-    bio: "Lisa brings a science-driven approach to body recomposition and sustainable fat loss. With a background in clinical exercise science, she excels at working with clients managing chronic conditions, postpartum recovery, and injury rehabilitation alongside their fitness goals.",
-  },
-  {
-    name: "Kai Okonkwo",
-    role: "Group Classes Lead",
-    credentials: "BSc Human Movement, CrossFit L2, FMS",
-    bio: "Kai is the energy behind our group programming. His classes blend strength, conditioning, and mobility into sessions that challenge and inspire. Before joining Cocoon, he coached at leading studios in London and Berlin, bringing an international perspective to functional fitness.",
+    name: "Jaka Kuraj",
+    role: "Coach",
+    credentials: "Masters in Human Movement Science",
+    experience: "2 Years Experience",
+    favExercise: "Split Squat",
+    image: "/images/jaka-kuraj.webp",
+    bio: "Jaka brings a strong academic foundation to his coaching with a Masters in Human Movement Science. His evidence-based approach to training ensures clients move well before they move heavy. With a keen eye for biomechanics and movement quality, Jaka specialises in helping clients build strength safely and efficiently. His passion for the split squat reflects his belief in unilateral training for balanced, functional strength.",
   },
 ] as const;
 
@@ -186,28 +187,44 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-3">
+          <div className="mx-auto mt-16 grid max-w-4xl gap-8 md:grid-cols-2">
             {trainers.map((trainer) => (
               <div
                 key={trainer.name}
-                className="group relative flex flex-col rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+                className="group relative flex flex-col rounded-xl border border-border bg-card overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
               >
-                {/* Avatar placeholder */}
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Award className="h-7 w-7" />
+                {/* Trainer image */}
+                <div className="relative h-80 w-full overflow-hidden bg-secondary">
+                  <Image
+                    src={trainer.image}
+                    alt={trainer.name}
+                    fill
+                    className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                  />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  {trainer.name}
-                </h3>
-                <p className="text-sm font-medium text-primary">
-                  {trainer.role}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {trainer.credentials}
-                </p>
-                <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">
-                  {trainer.bio}
-                </p>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {trainer.name}
+                  </h3>
+                  <p className="text-sm font-medium text-primary">
+                    {trainer.role}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">
+                      {trainer.credentials}
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">
+                      {trainer.experience}
+                    </span>
+                  </div>
+                  <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">
+                    {trainer.bio}
+                  </p>
+                  <div className="mt-4 flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Fav Exercise:</span>
+                    <span className="font-medium text-primary">{trainer.favExercise}</span>
+                  </div>
+                </div>
                 <div className="absolute inset-x-0 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-primary/60 to-transparent transition-transform duration-300 group-hover:scale-x-100" />
               </div>
             ))}

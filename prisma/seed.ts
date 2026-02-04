@@ -809,7 +809,7 @@ async function main() {
     where: { email: "info@cocoongym.com" },
     update: {},
     create: {
-      name: "Cocoon Gym",
+      name: "Paul Stribling",
       email: "info@cocoongym.com",
       passwordHash: trainerPassword,
       role: "TRAINER",
