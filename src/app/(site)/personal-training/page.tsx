@@ -183,79 +183,41 @@ export default function PersonalTrainingPage() {
                   Pricing
                 </div>
                 <h3 className="text-2xl font-bold text-foreground">
-                  Training Packages
+                  Personal / Duo Training Prices
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Flexible options to match your commitment level
-                </p>
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-lg border border-border p-4 transition-colors hover:border-primary/20">
+                <div className="rounded-lg border border-primary/40 bg-primary/5 p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-semibold text-foreground">Starter</h4>
-                      <p className="text-sm text-muted-foreground">
-                        4 sessions per month
-                      </p>
+                      <h4 className="text-lg font-semibold text-foreground">1-1 Personal Training</h4>
                     </div>
                     <div className="text-right">
+                      <div className="text-sm text-muted-foreground">From</div>
                       <div className="text-2xl font-bold text-foreground">
-                        &euro;280
+                        &euro;85
                       </div>
-                      <div className="text-xs text-muted-foreground">/month</div>
+                      <div className="text-xs text-muted-foreground">per session</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-primary/40 bg-primary/5 p-4">
+                <div className="rounded-lg border border-primary/40 bg-primary/5 p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-foreground">
-                          Committed
-                        </h4>
-                        <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
-                          Popular
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        8 sessions per month
-                      </p>
+                      <h4 className="text-lg font-semibold text-foreground">Duo Personal Training</h4>
                     </div>
                     <div className="text-right">
+                      <div className="text-sm text-muted-foreground">From</div>
                       <div className="text-2xl font-bold text-foreground">
-                        &euro;520
+                        &euro;100
                       </div>
-                      <div className="text-xs text-muted-foreground">/month</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-border p-4 transition-colors hover:border-primary/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-foreground">
-                        All In
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        12 sessions per month
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-foreground">
-                        &euro;720
-                      </div>
-                      <div className="text-xs text-muted-foreground">/month</div>
+                      <div className="text-xs text-muted-foreground">per session</div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <p className="mt-6 text-center text-xs text-muted-foreground">
-                All packages include nutrition guidance and client portal access.
-                Prices exclude VAT. Contact us for custom corporate packages.
-              </p>
 
               <div className="mt-6">
                 <Link
