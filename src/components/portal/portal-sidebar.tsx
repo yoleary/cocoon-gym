@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logoutAction } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -259,7 +260,7 @@ export function PortalSidebar({ user }: PortalSidebarProps) {
               </div>
             )}
           </div>
-          <form action="/api/auth/signout" method="POST">
+          <form action={logoutAction}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

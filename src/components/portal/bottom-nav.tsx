@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logoutAction } from "@/actions/auth.actions";
 import {
   Sheet,
   SheetContent,
@@ -195,7 +196,7 @@ export function BottomNav({ userRole }: BottomNavProps) {
 
             <Separator className="my-4" />
 
-            <form action="/api/auth/signout" method="POST">
+            <form action={logoutAction}>
               <Button
                 type="submit"
                 variant="ghost"
