@@ -107,7 +107,9 @@ export default function LiveSessionPage({
         }
 
         // Start a new session via server action
-        const newSessionId = await startSession(newTemplateId);
+        const result = await startSession(newTemplateId);
+        const newSessionId = result.sessionId;
+        const sessionExercises = result.sessionExercises;
 
         // Load the template exercises
         const programs = await getPrograms();
@@ -152,7 +154,15 @@ export default function LiveSessionPage({
               })
             );
 
+            // Find the matching sessionExercise to get the DB ID
+            const matchingSE = sessionExercises.find(
+              (se) =>
+                se.exerciseId === ex.exerciseId &&
+                se.position === ex.position
+            );
+
             liveExercises.push({
+              sessionExerciseId: matchingSE?.id,
               exerciseId: ex.exerciseId,
               name: ex.exerciseName,
               position: ex.position,
@@ -261,9 +271,10 @@ export default function LiveSessionPage({
     try {
       // Log all completed sets to the server
       for (const exercise of exercises) {
+        if (!exercise.sessionExerciseId) continue;
         for (const set of exercise.sets) {
           if (set.completed && !set.id) {
-            await logSet(exercise.sessionExerciseId ?? "", {
+            await logSet(exercise.sessionExerciseId, {
               setNumber: set.setNumber,
               setType: set.setType,
               weight: set.weight,

@@ -7,7 +7,7 @@ import { MapPin, Phone, Mail, Clock, ArrowRight } from "lucide-react";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Get in touch with Cocoon Gym Amsterdam. Book a free consultation, ask questions, or visit our studio on the Keizersgracht.",
+    "Get in touch with Cocoon Gym Amsterdam. Book a free consultation, ask questions, or visit our studio.",
 };
 
 const openingHours = [
@@ -60,14 +60,14 @@ export default function ContactPage() {
                 Visit Us
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Keizersgracht 123
+                Sloterkade 169
               </p>
               <p className="text-sm text-muted-foreground">
-                1015 CJ Amsterdam
+                1059 EB Amsterdam
               </p>
               <p className="text-sm text-muted-foreground">The Netherlands</p>
               <a
-                href="https://maps.google.com/?q=Keizersgracht+123+Amsterdam"
+                href="https://maps.google.com/?q=Sloterkade+169+Amsterdam"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
@@ -148,13 +148,13 @@ export default function ContactPage() {
               <div className="text-center">
                 <MapPin className="mx-auto h-12 w-12 text-primary/30" />
                 <p className="mt-3 text-sm font-medium text-muted-foreground">
-                  Keizersgracht 123, Amsterdam
+                  Sloterkade 169, Amsterdam
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Canal District &bull; 5 min from Westermarkt tram stop
+                  1059 EB Amsterdam
                 </p>
                 <a
-                  href="https://maps.google.com/?q=Keizersgracht+123+Amsterdam"
+                  href="https://maps.google.com/?q=Sloterkade+169+Amsterdam"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"

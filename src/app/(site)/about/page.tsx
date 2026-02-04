@@ -192,12 +192,12 @@ export default function AboutPage() {
                 className="group relative flex flex-col rounded-xl border border-border bg-card overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
               >
                 {/* Trainer image */}
-                <div className="relative h-80 w-full overflow-hidden bg-secondary">
+                <div className="relative h-96 w-full overflow-hidden bg-secondary">
                   <Image
                     src={trainer.image}
                     alt={trainer.name}
                     fill
-                    className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
                 <div className="p-6">
@@ -231,18 +231,36 @@ export default function AboutPage() {
       <section className="relative py-24 sm:py-32 bg-card/50">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* New Location Coming Soon Banner */}
+          <div className="mx-auto mb-12 max-w-3xl overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-500 p-[2px]">
+            <div className="rounded-[14px] bg-card/95 backdrop-blur-sm px-6 py-5 sm:px-8 sm:py-6">
+              <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500">
+                  <MapPin className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-orange-400 bg-clip-text text-transparent">
+                    New Location Coming Soon
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Cocoon Gym is moving to a brand new space in Amsterdam. Stay tuned for details on our exciting new home.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
               <div className="mb-4 text-sm font-semibold uppercase tracking-widest text-primary">
-                Location
+                Current Location
               </div>
               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Find Us in the Heart of Amsterdam
+                Find Us in Amsterdam
               </h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                Located on the Keizersgracht in the canal district, Cocoon Gym
-                is easily accessible by bike, tram, or on foot from anywhere in
-                the city centre.
+                Cocoon Gym is conveniently located in Amsterdam, easily
+                accessible by bike, tram, or on foot.
               </p>
 
               <div className="mt-8 space-y-4">
@@ -251,7 +269,7 @@ export default function AboutPage() {
                   <div>
                     <p className="font-medium text-foreground">Address</p>
                     <p className="text-sm text-muted-foreground">
-                      Keizersgracht 123, 1015 CJ Amsterdam
+                      Sloterkade 169, 1059 EB Amsterdam
                     </p>
                   </div>
                 </div>
@@ -260,8 +278,8 @@ export default function AboutPage() {
                   <div>
                     <p className="font-medium text-foreground">Transport</p>
                     <p className="text-sm text-muted-foreground">
-                      5 min walk from Tram 13/17 Westermarkt stop. Bike parking
-                      at the front door.
+                      Bike parking at the front door. Easily reachable by tram
+                      and bus.
                     </p>
                   </div>
                 </div>
@@ -284,13 +302,13 @@ export default function AboutPage() {
                 <div className="text-center">
                   <MapPin className="mx-auto h-12 w-12 text-primary/30" />
                   <p className="mt-3 text-sm font-medium text-muted-foreground">
-                    Keizersgracht 123
+                    Sloterkade 169
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    1015 CJ Amsterdam
+                    1059 EB Amsterdam
                   </p>
                   <a
-                    href="https://maps.google.com/?q=Keizersgracht+123+Amsterdam"
+                    href="https://maps.google.com/?q=Sloterkade+169+Amsterdam"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"

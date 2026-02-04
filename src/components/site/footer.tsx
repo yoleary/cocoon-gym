@@ -79,30 +79,42 @@ export function Footer() {
             {/* Address */}
             <div className="mt-6 space-y-1 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">Visit Us</p>
-              <p>Keizersgracht 123</p>
-              <p>1015 CJ Amsterdam</p>
+              <p>Sloterkade 169</p>
+              <p>1059 EB Amsterdam</p>
               <p>The Netherlands</p>
             </div>
 
             {/* Social links */}
             <div className="mt-6 flex items-center gap-3">
               <a
-                href="https://instagram.com/cocoongym"
+                href="https://www.instagram.com/cocoongymamsterdam/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary hover:bg-primary/5"
+                className="group inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border transition-all hover:border-pink-500/40 hover:shadow-md hover:shadow-pink-500/10"
                 aria-label="Follow us on Instagram"
               >
-                <InstagramIcon className="h-4 w-4" />
-              </a>
-              <a
-                href="https://youtube.com/@cocoongym"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary hover:bg-primary/5"
-                aria-label="Subscribe on YouTube"
-              >
-                <YouTubeIcon className="h-4 w-4" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5"
+                >
+                  <defs>
+                    <linearGradient id="ig-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#feda75" />
+                      <stop offset="20%" stopColor="#fa7e1e" />
+                      <stop offset="45%" stopColor="#d62976" />
+                      <stop offset="70%" stopColor="#962fbf" />
+                      <stop offset="100%" stopColor="#4f5bd5" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="20" height="20" x="2" y="2" rx="5" ry="5" stroke="url(#ig-gradient)" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="url(#ig-gradient)" />
+                  <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" stroke="url(#ig-gradient)" />
+                </svg>
               </a>
             </div>
           </div>

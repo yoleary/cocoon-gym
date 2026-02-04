@@ -21,7 +21,13 @@ export async function startSession(templateId: string, weekNumber?: number) {
     },
   });
 
-  // Create session exercises from template
+  // Create session exercises from template and collect their IDs
+  const sessionExercises: Array<{
+    id: string;
+    exerciseId: string;
+    position: string;
+  }> = [];
+
   if (templateId) {
     const template = await db.workoutTemplate.findUnique({
       where: { id: templateId },
@@ -37,7 +43,7 @@ export async function startSession(templateId: string, weekNumber?: number) {
       let order = 0;
       for (const block of template.blocks) {
         for (const te of block.exercises) {
-          await db.sessionExercise.create({
+          const se = await db.sessionExercise.create({
             data: {
               sessionId: workoutSession.id,
               exerciseId: te.exerciseId,
@@ -45,12 +51,17 @@ export async function startSession(templateId: string, weekNumber?: number) {
               order: order++,
             },
           });
+          sessionExercises.push({
+            id: se.id,
+            exerciseId: te.exerciseId,
+            position: te.position,
+          });
         }
       }
     }
   }
 
-  return workoutSession.id;
+  return { sessionId: workoutSession.id, sessionExercises };
 }
 
 export async function logSet(
