@@ -806,22 +806,22 @@ async function main() {
   const clientPassword = await bcrypt.hash("client123", 12);
 
   const trainer = await prisma.user.upsert({
-    where: { email: "daan@cocoongym.nl" },
+    where: { email: "info@cocoongym.com" },
     update: {},
     create: {
-      name: "Daan de Vries",
-      email: "daan@cocoongym.nl",
+      name: "Cocoon Gym",
+      email: "info@cocoongym.com",
       passwordHash: trainerPassword,
       role: "TRAINER",
     },
   });
 
   const client = await prisma.user.upsert({
-    where: { email: "yorke@example.com" },
+    where: { email: "yorkeoleary@gmail.com" },
     update: {},
     create: {
-      name: "Yorke O.",
-      email: "yorke@example.com",
+      name: "Yorke O'Leary",
+      email: "yorkeoleary@gmail.com",
       passwordHash: clientPassword,
       role: "CLIENT",
       goal: "Build strength and muscle",
@@ -843,7 +843,7 @@ async function main() {
     },
   });
 
-  console.log("✓ Users seeded (Trainer: daan@cocoongym.nl / trainer123, Client: yorke@example.com / client123)");
+  console.log("✓ Users seeded (Trainer: info@cocoongym.com / trainer123, Client: yorkeoleary@gmail.com / client123)");
 
   // ─── PROGRAM & TEMPLATES ────────────────────────
   const program = await prisma.program.create({
