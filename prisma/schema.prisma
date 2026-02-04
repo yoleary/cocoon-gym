@@ -1,0 +1,404 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────
+
+enum UserRole {
+  TRAINER
+  CLIENT
+}
+
+enum SetType {
+  WARMUP
+  WORKING
+  DROP
+  AMRAP
+  FAILURE
+}
+
+enum MuscleRole {
+  PRIMARY
+  SECONDARY
+  STABILIZER
+}
+
+enum BodyRegion {
+  UPPER_BODY
+  LOWER_BODY
+  CORE
+  FULL_BODY
+}
+
+enum MovementPattern {
+  HORIZONTAL_PUSH
+  VERTICAL_PUSH
+  HORIZONTAL_PULL
+  VERTICAL_PULL
+  HIP_HINGE
+  SQUAT
+  LUNGE
+  CARRY
+  ROTATION
+  ANTI_ROTATION
+  ISOLATION
+  PLANK
+  STRETCH
+}
+
+enum RecordType {
+  E1RM
+  MAX_WEIGHT
+  MAX_REPS_AT_WEIGHT
+  MAX_VOLUME_SESSION
+  MAX_DURATION
+}
+
+enum AchievementTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+// ─── AUTH & USERS ─────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String?
+  image         String?
+  role          UserRole  @default(CLIENT)
+  goal          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  clients       TrainerClient[] @relation("TrainerClients")
+  trainers      TrainerClient[] @relation("ClientTrainers")
+
+  sessions          WorkoutSession[]
+  personalRecords   PersonalRecord[]
+  streak            Streak?
+  achievements      UserAchievement[]
+  createdExercises  Exercise[]       @relation("CreatedExercises")
+  programsCreated   Program[]
+
+  accounts      Account[]
+  authSessions  AuthSession[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model AuthSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model TrainerClient {
+  id        String   @id @default(cuid())
+  trainerId String
+  clientId  String
+  assignedAt DateTime @default(now())
+  active    Boolean  @default(true)
+
+  trainer   User @relation("TrainerClients", fields: [trainerId], references: [id])
+  client    User @relation("ClientTrainers", fields: [clientId], references: [id])
+
+  @@unique([trainerId, clientId])
+  @@map("trainer_clients")
+}
+
+// ─── EXERCISE LIBRARY ─────────────────────────────
+
+model MuscleGroup {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  parentId String?
+  parent   MuscleGroup?  @relation("MuscleGroupHierarchy", fields: [parentId], references: [id])
+  children MuscleGroup[] @relation("MuscleGroupHierarchy")
+
+  exercises ExerciseMuscle[]
+
+  @@map("muscle_groups")
+}
+
+model Equipment {
+  id   String @id @default(cuid())
+  name String @unique
+
+  exercises ExerciseEquipment[]
+
+  @@map("equipment")
+}
+
+model Exercise {
+  id              String          @id @default(cuid())
+  name            String
+  instructions    String?
+  videoUrl        String?
+  bodyRegion      BodyRegion
+  movementPattern MovementPattern
+  isCompound      Boolean         @default(true)
+  isCustom        Boolean         @default(false)
+  createdById     String?
+  createdBy       User?           @relation("CreatedExercises", fields: [createdById], references: [id])
+  createdAt       DateTime        @default(now())
+
+  muscles           ExerciseMuscle[]
+  equipment         ExerciseEquipment[]
+  templateExercises TemplateExercise[]
+  sessionExercises  SessionExercise[]
+  personalRecords   PersonalRecord[]
+
+  @@map("exercises")
+}
+
+model ExerciseMuscle {
+  id            String     @id @default(cuid())
+  exerciseId    String
+  muscleGroupId String
+  role          MuscleRole
+
+  exercise    Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  muscleGroup MuscleGroup @relation(fields: [muscleGroupId], references: [id])
+
+  @@unique([exerciseId, muscleGroupId])
+  @@map("exercise_muscles")
+}
+
+model ExerciseEquipment {
+  id          String @id @default(cuid())
+  exerciseId  String
+  equipmentId String
+
+  exercise  Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@unique([exerciseId, equipmentId])
+  @@map("exercise_equipment")
+}
+
+// ─── PROGRAM TEMPLATES ────────────────────────────
+
+model Program {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trainerId   String
+  trainer     User     @relation(fields: [trainerId], references: [id])
+  weeks       Int      @default(4)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  templates   WorkoutTemplate[]
+  assignments ProgramAssignment[]
+
+  @@map("programs")
+}
+
+model ProgramAssignment {
+  id         String   @id @default(cuid())
+  programId  String
+  clientId   String
+  startDate  DateTime
+  active     Boolean  @default(true)
+
+  program Program @relation(fields: [programId], references: [id])
+
+  @@map("program_assignments")
+}
+
+model WorkoutTemplate {
+  id        String @id @default(cuid())
+  programId String
+  name      String
+  order     Int
+
+  program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  blocks    TemplateBlock[]
+  sessions  WorkoutSession[]
+
+  @@map("workout_templates")
+}
+
+model TemplateBlock {
+  id         String @id @default(cuid())
+  templateId String
+  label      String
+  order      Int
+  isSuperset Boolean @default(false)
+
+  template  WorkoutTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  exercises TemplateExercise[]
+
+  @@map("template_blocks")
+}
+
+model TemplateExercise {
+  id            String  @id @default(cuid())
+  blockId       String
+  exerciseId    String
+  position      String
+  order         Int
+  targetSets    Int?
+  targetReps    String?
+  targetWeight  String?
+  tempo         String?
+  restSeconds   Int?
+  notes         String?
+
+  block    TemplateBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  exercise Exercise      @relation(fields: [exerciseId], references: [id])
+
+  @@map("template_exercises")
+}
+
+// ─── WORKOUT SESSIONS (LOGGED DATA) ──────────────
+
+model WorkoutSession {
+  id          String    @id @default(cuid())
+  userId      String
+  templateId  String?
+  weekNumber  Int?
+  loggedBy    String
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  notes       String?
+  totalVolume Float?
+  duration    Int?
+
+  user     User             @relation(fields: [userId], references: [id])
+  template WorkoutTemplate? @relation(fields: [templateId], references: [id])
+  exercises SessionExercise[]
+
+  @@map("workout_sessions")
+}
+
+model SessionExercise {
+  id          String @id @default(cuid())
+  sessionId   String
+  exerciseId  String
+  position    String
+  order       Int
+  notes       String?
+
+  session  WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercise Exercise       @relation(fields: [exerciseId], references: [id])
+  sets     ExerciseSet[]
+
+  @@map("session_exercises")
+}
+
+model ExerciseSet {
+  id                String   @id @default(cuid())
+  sessionExerciseId String
+  setNumber         Int
+  setType           SetType  @default(WORKING)
+  weight            Float?
+  reps              Int?
+  durationSeconds   Int?
+  rpe               Float?
+  completed         Boolean  @default(false)
+  loggedAt          DateTime @default(now())
+
+  sessionExercise SessionExercise @relation(fields: [sessionExerciseId], references: [id], onDelete: Cascade)
+
+  @@map("exercise_sets")
+}
+
+// ─── METRICS & GAMIFICATION ───────────────────────
+
+model PersonalRecord {
+  id         String     @id @default(cuid())
+  userId     String
+  exerciseId String
+  recordType RecordType
+  value      Float
+  context    String?
+  achievedAt DateTime   @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@map("personal_records")
+}
+
+model Streak {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  currentStreak    Int      @default(0)
+  longestStreak    Int      @default(0)
+  lastActivityDate DateTime?
+  freezesUsed      Int      @default(0)
+  freezesAllowed   Int      @default(2)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("streaks")
+}
+
+model Achievement {
+  id          String          @id @default(cuid())
+  name        String          @unique
+  description String
+  icon        String
+  tier        AchievementTier
+  threshold   Int
+  category    String
+
+  users UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id])
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
