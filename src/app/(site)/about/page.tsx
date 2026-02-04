@@ -54,7 +54,6 @@ const trainers = [
     experience: "16 Years Experience",
     favExercise: "Front Squat",
     image: "/images/paul-stribling.webp",
-    bio: "Paul is the founder and head coach of Cocoon Gym. With 16 years of experience as a qualified Personal Trainer and Sports Therapist, he brings a wealth of knowledge in strength programming, injury prevention, and rehabilitation. His coaching philosophy centres on building a strong foundation through compound movements, progressive overload, and individualised programming. Whether you're a complete beginner or an experienced lifter, Paul's hands-on approach ensures every session is purposeful and moves you closer to your goals.",
   },
   {
     name: "Jaka Kuraj",
@@ -63,7 +62,6 @@ const trainers = [
     experience: "2 Years Experience",
     favExercise: "Split Squat",
     image: "/images/jaka-kuraj.webp",
-    bio: "Jaka brings a strong academic foundation to his coaching with a Masters in Human Movement Science. His evidence-based approach to training ensures clients move well before they move heavy. With a keen eye for biomechanics and movement quality, Jaka specialises in helping clients build strength safely and efficiently. His passion for the split squat reflects his belief in unilateral training for balanced, functional strength.",
   },
 ] as const;
 
@@ -217,9 +215,6 @@ export default function AboutPage() {
                       {trainer.experience}
                     </span>
                   </div>
-                  <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">
-                    {trainer.bio}
-                  </p>
                   <div className="mt-4 flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">Fav Exercise:</span>
                     <span className="font-medium text-primary">{trainer.favExercise}</span>
