@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -92,19 +93,19 @@ export function PortalSidebar({ user }: PortalSidebarProps) {
         )}
       >
         {/* Branding */}
-        <div className="flex h-16 items-center gap-3 border-b border-border px-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
-            <Dumbbell className="h-5 w-5 text-primary-foreground" />
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col overflow-hidden">
-              <span className="truncate text-sm font-bold tracking-tight text-foreground">
-                Cocoon Gym
-              </span>
-              <span className="truncate text-xs text-muted-foreground">
-                Amsterdam
-              </span>
+        <div className="flex h-16 items-center border-b border-border px-4">
+          {collapsed ? (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
+              <Dumbbell className="h-5 w-5 text-primary-foreground" />
             </div>
+          ) : (
+            <Image
+              src="/images/logo.webp"
+              alt="Cocoon Gym"
+              width={150}
+              height={38}
+              className="h-7 w-auto"
+            />
           )}
         </div>
 

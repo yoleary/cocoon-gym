@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,11 +45,16 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Cocoon Gym
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <Image
+            src="/images/logo.webp"
+            alt="Cocoon Gym"
+            width={220}
+            height={55}
+            className="h-10 w-auto"
+            priority
+          />
+          <p className="text-sm text-muted-foreground">
             Sign in to your training portal
           </p>
         </div>

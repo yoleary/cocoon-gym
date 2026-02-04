@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const quickLinks = [
   { href: "/personal-training", label: "Personal Training" },
@@ -60,13 +61,14 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-4">
           {/* Brand column */}
           <div className="lg:col-span-2">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground text-sm">
-                CG
-              </div>
-              <span className="text-lg font-bold tracking-tight text-foreground">
-                Cocoon <span className="text-primary">Gym</span>
-              </span>
+            <Link href="/" className="inline-flex items-center">
+              <Image
+                src="/images/logo.webp"
+                alt="Cocoon Gym"
+                width={180}
+                height={45}
+                className="h-8 w-auto"
+              />
             </Link>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
               Amsterdam&apos;s personal training studio dedicated to helping you

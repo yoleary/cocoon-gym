@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -50,13 +51,15 @@ export function Navbar() {
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground text-sm transition-transform group-hover:scale-105">
-            CG
-          </div>
-          <span className="text-lg font-bold tracking-tight text-foreground">
-            Cocoon <span className="text-primary">Gym</span>
-          </span>
+        <Link href="/" className="flex items-center group">
+          <Image
+            src="/images/logo.webp"
+            alt="Cocoon Gym"
+            width={180}
+            height={45}
+            className="h-8 w-auto transition-transform group-hover:scale-105"
+            priority
+          />
         </Link>
 
         {/* Desktop Navigation */}
