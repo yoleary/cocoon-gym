@@ -6,6 +6,20 @@ export const authConfig = {
     error: "/login",
   },
   callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        (session.user as any).role = token.role;
+      }
+      return session;
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isPortal = nextUrl.pathname.startsWith("/portal") || nextUrl.pathname.startsWith("/dashboard");
