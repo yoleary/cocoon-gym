@@ -373,6 +373,43 @@ export async function assignProgram(
   return { assignmentId: assignment.id };
 }
 
+// ─── Unassign program from a client (trainer only) ───
+
+export async function unassignProgram(assignmentId: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const role = (session.user as any).role;
+  if (role !== "TRAINER") throw new Error("Only trainers can unassign programs");
+
+  const trainerId = session.user.id!;
+
+  // Get the assignment and verify ownership
+  const assignment = await db.programAssignment.findUnique({
+    where: { id: assignmentId },
+    include: {
+      program: { select: { trainerId: true, id: true } },
+    },
+  });
+
+  if (!assignment) throw new Error("Assignment not found");
+  if (assignment.program.trainerId !== trainerId) {
+    throw new Error("You do not own this program");
+  }
+
+  // Deactivate the assignment
+  await db.programAssignment.update({
+    where: { id: assignmentId },
+    data: { active: false },
+  });
+
+  revalidatePath("/portal/programs");
+  revalidatePath(`/portal/admin/programs/${assignment.program.id}`);
+  revalidatePath(`/portal/clients/${assignment.clientId}`);
+
+  return { success: true };
+}
+
 // ─── Get programs assigned to a client ───────────
 
 export async function getClientPrograms(clientId: string) {

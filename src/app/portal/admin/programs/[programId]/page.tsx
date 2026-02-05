@@ -25,6 +25,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ProgressionTypeSelector } from "@/components/admin/progression-type-selector";
 import { EditProgramDialog } from "@/components/admin/edit-program-dialog";
+import { UnassignProgramButton } from "@/components/admin/unassign-program-button";
 
 export default async function ProgramDetailPage({
   params,
@@ -281,6 +282,11 @@ async function ProgramDetailContent({ programId }: { programId: string }) {
                         {assignment.hasBaseline ? "Edit" : "Record"} Baseline
                       </Link>
                     </Button>
+                    <UnassignProgramButton
+                      assignmentId={assignment.id}
+                      clientName={assignment.clientName}
+                      programName={program.name}
+                    />
                   </div>
                 </div>
               ))}
