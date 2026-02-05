@@ -5,7 +5,6 @@ import {
   ChevronRight,
   ClipboardCheck,
   Dumbbell,
-  Edit,
   FileStack,
   Layers,
   Link2,
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ProgressionTypeSelector } from "@/components/admin/progression-type-selector";
+import { EditProgramDialog } from "@/components/admin/edit-program-dialog";
 
 export default async function ProgramDetailPage({
   params,
@@ -111,10 +111,12 @@ async function ProgramDetailContent({ programId }: { programId: string }) {
                   Assign to Client
                 </Link>
               </Button>
-              <Button variant="outline" size="sm">
-                <Edit className="h-4 w-4 mr-1.5" />
-                Edit Program
-              </Button>
+              <EditProgramDialog
+                programId={programId}
+                currentName={program.name}
+                currentDescription={program.description}
+                currentWeeks={program.weeks}
+              />
             </div>
           </div>
         </CardHeader>
