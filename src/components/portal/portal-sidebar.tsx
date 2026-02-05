@@ -59,7 +59,7 @@ const adminNavItems: NavItem[] = [
   { label: "Programs", href: "/portal/admin/programs", icon: BookOpen },
   {
     label: "Manage Exercises",
-    href: "/portal/admin/exercises",
+    href: "/portal/admin/exercises/manage",
     icon: Settings,
   },
 ];
