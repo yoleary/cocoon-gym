@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx prisma db push && next build",
+    "build": "npx prisma generate && (npx prisma db push || echo 'db push skipped') && next build",
     "start": "next start",
     "lint": "eslint",
     "db:push": "npx prisma db push",
