@@ -66,6 +66,14 @@ enum AchievementTier {
   PLATINUM
 }
 
+enum ProgressionType {
+  NONE
+  STRENGTH
+  HYPERTROPHY
+  ENDURANCE
+  LINEAR
+}
+
 // ─── AUTH & USERS ─────────────────────────────────
 
 model User {
@@ -88,6 +96,7 @@ model User {
   achievements      UserAchievement[]
   createdExercises  Exercise[]       @relation("CreatedExercises")
   programsCreated   Program[]
+  recordedBaselines ClientBaseline[] @relation("RecordedBaselines")
 
   accounts      Account[]
   authSessions  AuthSession[]
@@ -188,6 +197,7 @@ model Exercise {
   templateExercises TemplateExercise[]
   sessionExercises  SessionExercise[]
   personalRecords   PersonalRecord[]
+  exerciseBaselines ExerciseBaseline[]
 
   @@map("exercises")
 }
@@ -220,14 +230,15 @@ model ExerciseEquipment {
 // ─── PROGRAM TEMPLATES ────────────────────────────
 
 model Program {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  trainerId   String
-  trainer     User     @relation(fields: [trainerId], references: [id])
-  weeks       Int      @default(4)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String          @id @default(cuid())
+  name            String
+  description     String?
+  trainerId       String
+  trainer         User            @relation(fields: [trainerId], references: [id])
+  weeks           Int             @default(6)
+  progressionType ProgressionType @default(NONE)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   templates   WorkoutTemplate[]
   assignments ProgramAssignment[]
@@ -242,7 +253,8 @@ model ProgramAssignment {
   startDate  DateTime
   active     Boolean  @default(true)
 
-  program Program @relation(fields: [programId], references: [id])
+  program  Program         @relation(fields: [programId], references: [id])
+  baseline ClientBaseline?
 
   @@map("program_assignments")
 }
@@ -290,6 +302,40 @@ model TemplateExercise {
   exercise Exercise      @relation(fields: [exerciseId], references: [id])
 
   @@map("template_exercises")
+}
+
+// ─── BASELINE ASSESSMENTS ────────────────────────
+
+model ClientBaseline {
+  id                  String   @id @default(cuid())
+  programAssignmentId String   @unique
+  bodyWeightKg        Float?
+  age                 Int?
+  bodyFatPercent      Float?
+  notes               String?
+  recordedAt          DateTime @default(now())
+  recordedById        String
+
+  programAssignment ProgramAssignment @relation(fields: [programAssignmentId], references: [id], onDelete: Cascade)
+  recordedBy        User              @relation("RecordedBaselines", fields: [recordedById], references: [id])
+  exerciseBaselines ExerciseBaseline[]
+
+  @@map("client_baselines")
+}
+
+model ExerciseBaseline {
+  id               String @id @default(cuid())
+  clientBaselineId String
+  exerciseId       String
+  startingWeight   Float
+  startingReps     Int?
+  notes            String?
+
+  clientBaseline ClientBaseline @relation(fields: [clientBaselineId], references: [id], onDelete: Cascade)
+  exercise       Exercise       @relation(fields: [exerciseId], references: [id])
+
+  @@unique([clientBaselineId, exerciseId])
+  @@map("exercise_baselines")
 }
 
 // ─── WORKOUT SESSIONS (LOGGED DATA) ──────────────

@@ -6,6 +6,7 @@ import type {
   MuscleRole,
   RecordType,
   AchievementTier,
+  ProgressionType,
 } from "@prisma/client";
 
 // Re-export Prisma enums for convenience
@@ -17,6 +18,7 @@ export type {
   MuscleRole,
   RecordType,
   AchievementTier,
+  ProgressionType,
 };
 
 // ─── Auth Types ───────────────────────────────────
@@ -67,6 +69,9 @@ export interface LiveExercise {
   supersetGroupLabel: string | null;
   sets: LiveSet[];
   previous: PreviousPerformance | null;
+  progressionNote: string | null;
+  suggestedWeightChange: string | null;
+  targetWeightKg: number | null;
 }
 
 export interface LiveSessionState {
@@ -74,6 +79,8 @@ export interface LiveSessionState {
   templateId: string | null;
   templateName: string | null;
   weekNumber: number | null;
+  progressionType: ProgressionType | null;
+  totalWeeks: number | null;
   currentExerciseIndex: number;
   exercises: LiveExercise[];
   isResting: boolean;

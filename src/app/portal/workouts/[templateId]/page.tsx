@@ -7,6 +7,7 @@ import {
   Play,
 } from "lucide-react";
 import { getProgramById, getPrograms } from "@/actions/program.actions";
+import { getBaseline } from "@/actions/baseline.actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { ProgressionPreviewGrid } from "@/components/workout/progression-preview-grid";
 
 export default async function TemplateDetailPage({
   params,
@@ -58,6 +60,35 @@ export default async function TemplateDetailPage({
     (sum, block) => sum + block.exercises.length,
     0
   );
+
+  // Gather exercises for progression preview
+  const allExercises = fullTemplate.blocks.flatMap((block) =>
+    block.exercises.map((ex) => ({
+      exerciseId: ex.exerciseId,
+      exerciseName: ex.exerciseName,
+      targetSets: ex.targetSets ?? 3,
+      targetReps: ex.targetReps ?? "8-12",
+      targetWeight: ex.targetWeight ?? "",
+      restSeconds: ex.restSeconds ?? 90,
+    }))
+  );
+
+  // Try to load baseline for the current user's assignment
+  let exerciseBaselines: Array<{ exerciseId: string; startingWeight: number }> = [];
+  const assignmentId = "assignmentId" in foundProgram ? (foundProgram as any).assignmentId : null;
+  if (assignmentId) {
+    try {
+      const baseline = await getBaseline(assignmentId);
+      if (baseline) {
+        exerciseBaselines = baseline.exerciseBaselines.map((eb) => ({
+          exerciseId: eb.exerciseId,
+          startingWeight: eb.startingWeight,
+        }));
+      }
+    } catch {
+      // Baseline not accessible — that's fine
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -195,37 +226,13 @@ export default async function TemplateDetailPage({
         ))}
       </div>
 
-      {/* Week progression grid placeholder */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle className="text-lg">Week Progression</CardTitle>
-          <CardDescription>
-            Track your performance across the {fullProgram.weeks}-week program.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
-            {Array.from({ length: fullProgram.weeks }, (_, i) => i + 1).map(
-              (week) => (
-                <div
-                  key={week}
-                  className="flex flex-col items-center gap-1 rounded-lg border border-border/50 p-3 text-center"
-                >
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Wk {week}
-                  </span>
-                  <span className="text-lg font-bold text-muted-foreground/30">
-                    --
-                  </span>
-                </div>
-              )
-            )}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground text-center">
-            Complete workouts to see your week-by-week progression here.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Week progression grid */}
+      <ProgressionPreviewGrid
+        exercises={allExercises}
+        progressionType={fullProgram.progressionType}
+        totalWeeks={fullProgram.weeks}
+        exerciseBaselines={exerciseBaselines}
+      />
 
       {/* Bottom CTA */}
       <div className="flex justify-center pb-4">

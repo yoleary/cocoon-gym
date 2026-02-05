@@ -101,6 +101,12 @@ async function ProgramsContent() {
                       {program.weeks} week
                       {program.weeks !== 1 ? "s" : ""}
                     </Badge>
+                    {"progressionType" in program &&
+                      (program as any).progressionType !== "NONE" && (
+                        <Badge variant="secondary" className="text-xs">
+                          {(program as any).progressionType}
+                        </Badge>
+                      )}
                   </div>
 
                   <Separator />

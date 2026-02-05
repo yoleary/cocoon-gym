@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { calculateE1RM, totalVolume } from "@/lib/metrics";
+import { calculateWeekNumber } from "@/lib/progression";
+import type { ProgressionType } from "@prisma/client";
 
 export async function startSession(templateId: string, weekNumber?: number) {
   const session = await auth();
@@ -11,11 +13,77 @@ export async function startSession(templateId: string, weekNumber?: number) {
 
   const userId = session.user.id!;
 
+  // Look up the program context for this template
+  const template = templateId
+    ? await db.workoutTemplate.findUnique({
+        where: { id: templateId },
+        include: {
+          program: {
+            select: {
+              id: true,
+              weeks: true,
+              progressionType: true,
+            },
+          },
+          blocks: {
+            include: {
+              exercises: { include: { exercise: true }, orderBy: { order: "asc" } },
+            },
+            orderBy: { order: "asc" },
+          },
+        },
+      })
+    : null;
+
+  // Look up the client's assignment and baseline
+  let computedWeekNumber = weekNumber ?? null;
+  let progressionType: ProgressionType = "NONE";
+  let totalWeeks = 6;
+  let exerciseBaselineMap: Record<string, number> = {};
+
+  if (template) {
+    progressionType = template.program.progressionType;
+    totalWeeks = template.program.weeks;
+
+    // Find the active assignment for this user on this program
+    const assignment = await db.programAssignment.findFirst({
+      where: {
+        programId: template.program.id,
+        clientId: userId,
+        active: true,
+      },
+      include: {
+        baseline: {
+          include: {
+            exerciseBaselines: true,
+          },
+        },
+      },
+    });
+
+    if (assignment) {
+      // Calculate week number from start date if not provided
+      if (computedWeekNumber == null) {
+        computedWeekNumber = calculateWeekNumber(
+          assignment.startDate,
+          totalWeeks
+        );
+      }
+
+      // Build exercise baseline map
+      if (assignment.baseline) {
+        for (const eb of assignment.baseline.exerciseBaselines) {
+          exerciseBaselineMap[eb.exerciseId] = eb.startingWeight;
+        }
+      }
+    }
+  }
+
   const workoutSession = await db.workoutSession.create({
     data: {
       userId,
       templateId,
-      weekNumber: weekNumber ?? null,
+      weekNumber: computedWeekNumber,
       loggedBy: userId,
       startedAt: new Date(),
     },
@@ -28,40 +96,35 @@ export async function startSession(templateId: string, weekNumber?: number) {
     position: string;
   }> = [];
 
-  if (templateId) {
-    const template = await db.workoutTemplate.findUnique({
-      where: { id: templateId },
-      include: {
-        blocks: {
-          include: { exercises: { include: { exercise: true }, orderBy: { order: "asc" } } },
-          orderBy: { order: "asc" },
-        },
-      },
-    });
-
-    if (template) {
-      let order = 0;
-      for (const block of template.blocks) {
-        for (const te of block.exercises) {
-          const se = await db.sessionExercise.create({
-            data: {
-              sessionId: workoutSession.id,
-              exerciseId: te.exerciseId,
-              position: te.position,
-              order: order++,
-            },
-          });
-          sessionExercises.push({
-            id: se.id,
+  if (template) {
+    let order = 0;
+    for (const block of template.blocks) {
+      for (const te of block.exercises) {
+        const se = await db.sessionExercise.create({
+          data: {
+            sessionId: workoutSession.id,
             exerciseId: te.exerciseId,
             position: te.position,
-          });
-        }
+            order: order++,
+          },
+        });
+        sessionExercises.push({
+          id: se.id,
+          exerciseId: te.exerciseId,
+          position: te.position,
+        });
       }
     }
   }
 
-  return { sessionId: workoutSession.id, sessionExercises };
+  return {
+    sessionId: workoutSession.id,
+    sessionExercises,
+    weekNumber: computedWeekNumber,
+    progressionType,
+    totalWeeks,
+    exerciseBaselines: exerciseBaselineMap,
+  };
 }
 
 export async function logSet(

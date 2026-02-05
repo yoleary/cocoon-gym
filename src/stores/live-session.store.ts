@@ -13,6 +13,8 @@ interface LiveSessionActions {
     templateId: string | null;
     templateName: string | null;
     weekNumber: number | null;
+    progressionType: string | null;
+    totalWeeks: number | null;
     exercises: LiveExercise[];
   }) => void;
 
@@ -62,6 +64,8 @@ const defaultState: LiveSessionState = {
   templateId: null,
   templateName: null,
   weekNumber: null,
+  progressionType: null,
+  totalWeeks: null,
   currentExerciseIndex: 0,
   exercises: [],
   isResting: false,
@@ -79,12 +83,14 @@ export const useLiveSessionStore = create<LiveSessionStore>()(
 
       // ── Init ──────────────────────────────────
 
-      initSession: ({ sessionId, templateId, templateName, weekNumber, exercises }) => {
+      initSession: ({ sessionId, templateId, templateName, weekNumber, progressionType, totalWeeks, exercises }) => {
         set({
           sessionId,
           templateId,
           templateName,
           weekNumber,
+          progressionType: progressionType as any,
+          totalWeeks,
           exercises,
           currentExerciseIndex: 0,
           isResting: false,
@@ -193,6 +199,8 @@ export const useLiveSessionStore = create<LiveSessionStore>()(
         templateId: state.templateId,
         templateName: state.templateName,
         weekNumber: state.weekNumber,
+        progressionType: state.progressionType,
+        totalWeeks: state.totalWeeks,
         currentExerciseIndex: state.currentExerciseIndex,
         exercises: state.exercises,
         sessionStartedAt: state.sessionStartedAt,

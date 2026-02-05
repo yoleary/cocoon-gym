@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ChevronRight,
+  ClipboardCheck,
   Dumbbell,
   Edit,
   FileStack,
@@ -23,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { ProgressionTypeSelector } from "@/components/admin/progression-type-selector";
 
 export default async function ProgramDetailPage({
   params,
@@ -83,6 +85,22 @@ async function ProgramDetailContent({ programId }: { programId: string }) {
                   <Users className="h-3 w-3" />
                   {program.assignments.length} assigned
                 </Badge>
+                {program.progressionType !== "NONE" && (
+                  <Badge variant="secondary" className="text-xs">
+                    {program.progressionType}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Progression type selector */}
+              <div className="mt-3">
+                <span className="text-xs text-muted-foreground mr-2">
+                  Progression:
+                </span>
+                <ProgressionTypeSelector
+                  programId={programId}
+                  currentType={program.progressionType}
+                />
               </div>
             </div>
 
@@ -229,21 +247,31 @@ async function ProgramDetailContent({ programId }: { programId: string }) {
           <CardContent>
             <div className="space-y-2">
               {program.assignments.map((assignment) => (
-                <Link
+                <div
                   key={assignment.id}
-                  href={`/portal/admin/clients/${assignment.clientId}`}
-                  className="group flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-accent/50"
+                  className="flex items-center justify-between rounded-lg border border-border/50 p-3"
                 >
-                  <div className="text-sm">
+                  <Link
+                    href={`/portal/admin/clients/${assignment.clientId}`}
+                    className="group flex items-center gap-2 text-sm hover:text-primary transition-colors"
+                  >
                     <span className="font-medium">
                       Client {assignment.clientId.slice(0, 8)}...
                     </span>
-                    <span className="ml-2 text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       Started {formatDate(assignment.startDate)}
                     </span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
-                </Link>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
+                  </Link>
+                  <Button variant="outline" size="sm" asChild className="text-xs gap-1.5">
+                    <Link
+                      href={`/portal/admin/programs/${programId}/baseline/${assignment.id}`}
+                    >
+                      <ClipboardCheck className="h-3.5 w-3.5" />
+                      Baseline
+                    </Link>
+                  </Button>
+                </div>
               ))}
             </div>
           </CardContent>

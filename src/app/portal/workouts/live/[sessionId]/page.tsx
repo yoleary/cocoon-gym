@@ -13,7 +13,8 @@ import {
 import { useLiveSessionStore } from "@/stores/live-session.store";
 import { startSession, logSet, completeSession } from "@/actions/session.actions";
 import { getProgramById, getPrograms } from "@/actions/program.actions";
-import type { LiveExercise, LiveSet, PRRecord, RecordType } from "@/types";
+import { applyProgression } from "@/lib/progression";
+import type { LiveExercise, LiveSet, PRRecord, RecordType, ProgressionType } from "@/types";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,8 @@ export default function LiveSessionPage({
     templateId,
     templateName,
     weekNumber,
+    progressionType,
+    totalWeeks,
     currentExerciseIndex,
     exercises,
     isResting,
@@ -110,6 +113,10 @@ export default function LiveSessionPage({
         const result = await startSession(newTemplateId);
         const newSessionId = result.sessionId;
         const sessionExercises = result.sessionExercises;
+        const serverWeekNumber = result.weekNumber;
+        const serverProgressionType = result.progressionType;
+        const serverTotalWeeks = result.totalWeeks;
+        const exerciseBaselines = result.exerciseBaselines;
 
         // Load the template exercises
         const programs = await getPrograms();
@@ -139,14 +146,48 @@ export default function LiveSessionPage({
 
         for (const block of fullTemplate.blocks) {
           for (const ex of block.exercises) {
-            const targetSets = ex.targetSets ?? 3;
+            let targetSets = ex.targetSets ?? 3;
+            let targetReps = ex.targetReps ?? "8-12";
+            let targetWeight = ex.targetWeight ?? "";
+            let restSeconds = ex.restSeconds ?? 90;
+            let progressionNote: string | null = null;
+            let suggestedWeightChange: string | null = null;
+            let targetWeightKg: number | null = null;
+
+            // Apply progression if applicable
+            if (
+              serverProgressionType !== "NONE" &&
+              serverWeekNumber != null
+            ) {
+              const startingWeight =
+                exerciseBaselines[ex.exerciseId] ?? null;
+              const prog = applyProgression(
+                {
+                  targetSets,
+                  targetReps,
+                  targetWeight,
+                  restSeconds,
+                },
+                serverWeekNumber,
+                serverProgressionType as ProgressionType,
+                serverTotalWeeks,
+                startingWeight
+              );
+              targetSets = prog.targetSets;
+              targetReps = prog.targetReps;
+              targetWeight = prog.targetWeight;
+              restSeconds = prog.restSeconds;
+              progressionNote = prog.progressionNote;
+              suggestedWeightChange = prog.suggestedWeightChange;
+              targetWeightKg = prog.targetWeightKg;
+            }
 
             const sets: LiveSet[] = Array.from(
               { length: targetSets },
               (_, i) => ({
                 setNumber: i + 1,
                 setType: "WORKING" as const,
-                weight: null,
+                weight: targetWeightKg,
                 reps: null,
                 durationSeconds: null,
                 rpe: null,
@@ -167,16 +208,19 @@ export default function LiveSessionPage({
               name: ex.exerciseName,
               position: ex.position,
               targetSets,
-              targetReps: ex.targetReps ?? "8-12",
-              targetWeight: ex.targetWeight ?? "",
+              targetReps,
+              targetWeight,
               tempo: ex.tempo ?? null,
-              restSeconds: ex.restSeconds ?? 90,
+              restSeconds,
               notes: ex.notes ?? null,
               videoUrl: ex.videoUrl ?? null,
               isSuperset: block.isSuperset,
               supersetGroupLabel: block.isSuperset ? block.label : null,
               sets,
               previous: null,
+              progressionNote,
+              suggestedWeightChange,
+              targetWeightKg,
             });
           }
         }
@@ -186,7 +230,9 @@ export default function LiveSessionPage({
           sessionId: newSessionId,
           templateId: newTemplateId,
           templateName: fullTemplate.name,
-          weekNumber: null,
+          weekNumber: serverWeekNumber,
+          progressionType: serverProgressionType,
+          totalWeeks: serverTotalWeeks,
           exercises: liveExercises,
         });
 
@@ -401,13 +447,20 @@ export default function LiveSessionPage({
       {/* Top bar: session info + controls */}
       <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-sm px-4 py-2">
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="truncate text-sm font-semibold">
-              {templateName ?? "Workout"}
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Exercise {currentExerciseIndex + 1} of {exercises.length}
-            </p>
+          <div className="min-w-0 flex items-center gap-2">
+            <div>
+              <h1 className="truncate text-sm font-semibold">
+                {templateName ?? "Workout"}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Exercise {currentExerciseIndex + 1} of {exercises.length}
+              </p>
+            </div>
+            {weekNumber != null && totalWeeks != null && (
+              <Badge variant="secondary" className="text-xs shrink-0">
+                Week {weekNumber}/{totalWeeks}
+              </Badge>
+            )}
           </div>
           <SessionControls
             sessionStartedAt={sessionStartedAt}
@@ -473,6 +526,24 @@ export default function LiveSessionPage({
                     </Badge>
                   )}
               </div>
+
+              {currentExercise.progressionNote && (
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-primary/80">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/60" />
+                  {currentExercise.progressionNote}
+                  {currentExercise.targetWeightKg != null && (
+                    <span className="font-medium">
+                      — Target: {currentExercise.targetWeightKg} kg
+                    </span>
+                  )}
+                  {currentExercise.suggestedWeightChange &&
+                    currentExercise.targetWeightKg == null && (
+                      <span className="font-medium">
+                        — {currentExercise.suggestedWeightChange}
+                      </span>
+                    )}
+                </div>
+              )}
 
               {currentExercise.notes && (
                 <p className="mt-2 text-xs text-muted-foreground/80 italic rounded-md border border-dashed p-2">

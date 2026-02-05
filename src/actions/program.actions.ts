@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import type { ProgressionType } from "@prisma/client";
 
 // ─── List programs ───────────────────────────────
 
@@ -38,6 +39,7 @@ export async function getPrograms() {
       name: p.name,
       description: p.description,
       weeks: p.weeks,
+      progressionType: p.progressionType,
       templateCount: p.templates.length,
       templates: p.templates.map((t) => ({ id: t.id, name: t.name, order: t.order })),
       activeAssignments: p._count.assignments,
@@ -68,6 +70,7 @@ export async function getPrograms() {
     name: a.program.name,
     description: a.program.description,
     weeks: a.program.weeks,
+    progressionType: a.program.progressionType,
     templateCount: a.program.templates.length,
     templates: a.program.templates.map((t) => ({ id: t.id, name: t.name, order: t.order })),
     trainerName: a.program.trainer.name,
@@ -137,6 +140,7 @@ export async function getProgramById(programId: string) {
     name: program.name,
     description: program.description,
     weeks: program.weeks,
+    progressionType: program.progressionType,
     trainer: program.trainer,
     createdAt: program.createdAt.toISOString(),
     updatedAt: program.updatedAt.toISOString(),
@@ -181,6 +185,7 @@ export async function createProgram(data: {
   name: string;
   description?: string;
   weeks?: number;
+  progressionType?: ProgressionType;
   templates?: Array<{
     name: string;
     order: number;
@@ -214,7 +219,8 @@ export async function createProgram(data: {
     data: {
       name: data.name,
       description: data.description ?? null,
-      weeks: data.weeks ?? 4,
+      weeks: data.weeks ?? 6,
+      progressionType: data.progressionType ?? "NONE",
       trainerId,
       templates: data.templates
         ? {
@@ -260,6 +266,7 @@ export async function updateProgram(
     name?: string;
     description?: string | null;
     weeks?: number;
+    progressionType?: ProgressionType;
   }
 ) {
   const session = await auth();
@@ -283,6 +290,7 @@ export async function updateProgram(
   if (data.name !== undefined) updateData.name = data.name;
   if (data.description !== undefined) updateData.description = data.description;
   if (data.weeks !== undefined) updateData.weeks = data.weeks;
+  if (data.progressionType !== undefined) updateData.progressionType = data.progressionType;
 
   await db.program.update({
     where: { id: programId },
@@ -396,6 +404,7 @@ export async function getClientPrograms(clientId: string) {
     name: a.program.name,
     description: a.program.description,
     weeks: a.program.weeks,
+    progressionType: a.program.progressionType,
     trainerName: a.program.trainer.name,
     startDate: a.startDate.toISOString(),
     templates: a.program.templates.map((t) => ({
