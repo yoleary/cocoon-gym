@@ -41,7 +41,7 @@ export async function startSession(templateId: string, weekNumber?: number) {
   let totalWeeks = 6;
   let exerciseBaselineMap: Record<string, number> = {};
 
-  if (template) {
+  if (template && template.program) {
     progressionType = template.program.progressionType;
     totalWeeks = template.program.weeks;
 

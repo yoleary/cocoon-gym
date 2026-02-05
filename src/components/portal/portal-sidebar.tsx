@@ -13,6 +13,7 @@ import {
   Apple,
   Users,
   BookOpen,
+  Layers,
   Settings,
   LogOut,
   ChevronLeft,
@@ -57,6 +58,7 @@ const mainNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { label: "Clients", href: "/portal/admin/clients", icon: Users },
   { label: "Programs", href: "/portal/admin/programs", icon: BookOpen },
+  { label: "Workout Library", href: "/portal/admin/workouts", icon: Layers },
   {
     label: "Manage Exercises",
     href: "/portal/admin/exercises/manage",

@@ -10,7 +10,9 @@ import {
   ChevronDown,
   ChevronUp,
   Dumbbell,
+  FolderOpen,
   GripVertical,
+  Layers,
   Loader2,
   Plus,
   Search,
@@ -169,6 +171,9 @@ function ProgramBuilder() {
   const [templates, setTemplates] = useState<TemplateEntry[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
+  // Step 2: Library import dialog
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+
   // Step 3: Exercise picker dialog
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
@@ -206,6 +211,49 @@ function ProgramBuilder() {
         ],
       }))
     );
+  };
+
+  const importFromLibrary = (libraryWorkout: {
+    name: string;
+    blocks: Array<{
+      label: string;
+      order: number;
+      isSuperset: boolean;
+      exercises: Array<{
+        exerciseId: string;
+        exerciseName: string;
+        bodyRegion: string;
+        targetSets: number | null;
+        targetReps: string | null;
+        restSeconds: number | null;
+        notes: string | null;
+      }>;
+    }>;
+  }) => {
+    const defaults = getDefaultsForProgression(progressionType);
+
+    const newTemplate: TemplateEntry = {
+      id: generateId(),
+      name: libraryWorkout.name,
+      blocks: libraryWorkout.blocks.map((b) => ({
+        id: generateId(),
+        label: b.label,
+        isSuperset: b.isSuperset,
+        exercises: b.exercises.map((e) => ({
+          id: generateId(),
+          exerciseId: e.exerciseId,
+          exerciseName: e.exerciseName,
+          bodyRegion: e.bodyRegion,
+          targetSets: e.targetSets ?? 3,
+          targetReps: e.targetReps ?? defaults.defaultReps,
+          restSeconds: e.restSeconds ?? defaults.defaultRest,
+          notes: e.notes ?? "",
+        })),
+      })),
+    };
+
+    setTemplates((prev) => [...prev, newTemplate]);
+    setImportDialogOpen(false);
   };
 
   const addTemplate = () => {
@@ -661,10 +709,21 @@ function ProgramBuilder() {
                 </div>
               ))}
 
-              <Button variant="outline" size="sm" onClick={addTemplate} className="w-full">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Workout Day
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={addTemplate} className="flex-1">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Empty Day
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImportDialogOpen(true)}
+                  className="flex-1"
+                >
+                  <FolderOpen className="h-4 w-4 mr-1" />
+                  Import from Library
+                </Button>
+              </div>
             </div>
 
             <div className="flex justify-between pt-4">
@@ -908,6 +967,13 @@ function ProgramBuilder() {
         onClose={() => setExerciseDialogOpen(false)}
         onSelect={addExerciseToBlock}
       />
+
+      {/* Import from Library Dialog */}
+      <ImportFromLibraryDialog
+        open={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onSelect={importFromLibrary}
+      />
     </div>
   );
 }
@@ -1036,6 +1102,127 @@ function ExercisePickerDialog({
             )}
           </ScrollArea>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Import from Library Dialog ──────────────────
+
+interface LibraryWorkout {
+  id: string;
+  name: string;
+  exerciseCount: number;
+  blocks: Array<{
+    label: string;
+    order: number;
+    isSuperset: boolean;
+    exercises: Array<{
+      exerciseId: string;
+      exerciseName: string;
+      bodyRegion: string;
+      targetSets: number | null;
+      targetReps: string | null;
+      restSeconds: number | null;
+      notes: string | null;
+    }>;
+  }>;
+}
+
+function ImportFromLibraryDialog({
+  open,
+  onClose,
+  onSelect,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (workout: LibraryWorkout) => void;
+}) {
+  const [workouts, setWorkouts] = useState<LibraryWorkout[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setLoading(true);
+      fetch("/api/workouts/library")
+        .then((res) => res.json())
+        .then((data) => setWorkouts(data.workouts || []))
+        .catch(() => setWorkouts([]))
+        .finally(() => setLoading(false));
+    }
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Import from Library</DialogTitle>
+        </DialogHeader>
+
+        <ScrollArea className="h-[350px]">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : workouts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <Layers className="h-8 w-8 mb-2 opacity-30" />
+              <p className="text-sm">No workouts in your library</p>
+              <p className="text-xs mt-1">
+                Create workouts in the Workout Library first.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {workouts.map((workout) => (
+                <button
+                  key={workout.id}
+                  onClick={() => onSelect(workout)}
+                  className="w-full rounded-md border border-border/50 p-3 text-left hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{workout.name}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {workout.exerciseCount} exercise
+                      {workout.exerciseCount !== 1 ? "s" : ""}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {workout.blocks.map((block) => (
+                      <Badge
+                        key={block.label}
+                        variant="secondary"
+                        className="text-[10px]"
+                      >
+                        {block.label}
+                        {block.isSuperset && " (SS)"}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {workout.blocks
+                      .flatMap((b) => b.exercises)
+                      .slice(0, 4)
+                      .map((ex, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[10px] text-muted-foreground"
+                        >
+                          {ex.exerciseName}
+                          {idx < 3 && ", "}
+                        </span>
+                      ))}
+                    {workout.exerciseCount > 4 && (
+                      <span className="text-[10px] text-muted-foreground">
+                        +{workout.exerciseCount - 4} more
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

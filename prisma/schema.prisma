@@ -97,6 +97,7 @@ model User {
   createdExercises  Exercise[]       @relation("CreatedExercises")
   programsCreated   Program[]
   recordedBaselines ClientBaseline[] @relation("RecordedBaselines")
+  workoutLibrary    WorkoutTemplate[] @relation("TrainerWorkouts")
 
   accounts      Account[]
   authSessions  AuthSession[]
@@ -260,12 +261,17 @@ model ProgramAssignment {
 }
 
 model WorkoutTemplate {
-  id        String @id @default(cuid())
-  programId String
+  id        String  @id @default(cuid())
+  programId String?
+  trainerId String?
   name      String
-  order     Int
+  order     Int     @default(0)
+  isLibrary Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade)
+  trainer   User?    @relation("TrainerWorkouts", fields: [trainerId], references: [id])
   blocks    TemplateBlock[]
   sessions  WorkoutSession[]
 
