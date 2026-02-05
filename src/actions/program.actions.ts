@@ -115,7 +115,12 @@ export async function getProgramById(programId: string) {
       },
       assignments: {
         where: { active: true },
-        select: { id: true, clientId: true, startDate: true },
+        select: {
+          id: true,
+          clientId: true,
+          startDate: true,
+          baseline: { select: { id: true } },
+        },
       },
     },
   });
@@ -171,11 +176,22 @@ export async function getProgramById(programId: string) {
         })),
       })),
     })),
-    assignments: program.assignments.map((a) => ({
-      id: a.id,
-      clientId: a.clientId,
-      startDate: a.startDate.toISOString(),
-    })),
+    assignments: await Promise.all(
+      program.assignments.map(async (a) => {
+        const client = await db.user.findUnique({
+          where: { id: a.clientId },
+          select: { name: true, email: true },
+        });
+        return {
+          id: a.id,
+          clientId: a.clientId,
+          clientName: client?.name ?? "Unknown",
+          clientEmail: client?.email ?? "",
+          startDate: a.startDate.toISOString(),
+          hasBaseline: !!a.baseline,
+        };
+      })
+    ),
   };
 }
 

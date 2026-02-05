@@ -253,24 +253,33 @@ async function ProgramDetailContent({ programId }: { programId: string }) {
                 >
                   <Link
                     href={`/portal/admin/clients/${assignment.clientId}`}
-                    className="group flex items-center gap-2 text-sm hover:text-primary transition-colors"
+                    className="group flex items-center gap-2 text-sm hover:text-primary transition-colors min-w-0"
                   >
-                    <span className="font-medium">
-                      Client {assignment.clientId.slice(0, 8)}...
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Started {formatDate(assignment.startDate)}
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
+                    <div className="min-w-0">
+                      <span className="font-medium block truncate">
+                        {assignment.clientName}
+                      </span>
+                      <span className="text-xs text-muted-foreground block truncate">
+                        {assignment.clientEmail} · Started {formatDate(assignment.startDate)}
+                      </span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
                   </Link>
-                  <Button variant="outline" size="sm" asChild className="text-xs gap-1.5">
-                    <Link
-                      href={`/portal/admin/programs/${programId}/baseline/${assignment.id}`}
-                    >
-                      <ClipboardCheck className="h-3.5 w-3.5" />
-                      Baseline
-                    </Link>
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    {assignment.hasBaseline && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Baseline set
+                      </Badge>
+                    )}
+                    <Button variant="outline" size="sm" asChild className="text-xs gap-1.5">
+                      <Link
+                        href={`/portal/admin/programs/${programId}/baseline/${assignment.id}`}
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        {assignment.hasBaseline ? "Edit" : "Record"} Baseline
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

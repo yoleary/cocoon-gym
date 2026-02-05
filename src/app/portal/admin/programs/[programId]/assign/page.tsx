@@ -26,21 +26,33 @@ import { redirect } from "next/navigation";
 
 export default async function AssignProgramPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ programId: string }>;
+  searchParams: Promise<{ clientId?: string }>;
 }) {
   const { programId } = await params;
+  const { clientId: preselectedClientId } = await searchParams;
 
   return (
     <RoleGuard allowedRoles={["TRAINER"]}>
-      <AssignProgramContent programId={programId} />
+      <AssignProgramContent
+        programId={programId}
+        preselectedClientId={preselectedClientId}
+      />
     </RoleGuard>
   );
 }
 
 // ─── Content ────────────────────────────────────
 
-async function AssignProgramContent({ programId }: { programId: string }) {
+async function AssignProgramContent({
+  programId,
+  preselectedClientId,
+}: {
+  programId: string;
+  preselectedClientId?: string;
+}) {
   let program: Awaited<ReturnType<typeof getProgramById>>;
 
   try {
@@ -149,7 +161,16 @@ async function AssignProgramContent({ programId }: { programId: string }) {
               {/* Client select */}
               <div className="space-y-2">
                 <Label htmlFor="clientId">Client</Label>
-                <Select name="clientId" required>
+                <Select
+                  name="clientId"
+                  required
+                  defaultValue={
+                    preselectedClientId &&
+                    availableClients.some((c) => c.id === preselectedClientId)
+                      ? preselectedClientId
+                      : undefined
+                  }
+                >
                   <SelectTrigger id="clientId">
                     <SelectValue placeholder="Select a client..." />
                   </SelectTrigger>

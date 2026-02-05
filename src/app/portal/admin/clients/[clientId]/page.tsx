@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Calendar,
   ChevronRight,
+  ClipboardCheck,
   ClipboardList,
   Dumbbell,
   Flame,
@@ -245,19 +246,49 @@ async function ClientDetailContent({ clientId }: { clientId: string }) {
             ) : (
               <div className="space-y-2">
                 {client.activePrograms.map((program) => (
-                  <Link
+                  <div
                     key={program.assignmentId}
-                    href={`/portal/admin/programs/${program.programId}`}
-                    className="group flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-accent/50"
+                    className="rounded-lg border border-border/50 p-3"
                   >
-                    <div className="flex items-center gap-2">
-                      <ClipboardList className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">
-                        {program.programName}
+                    <div className="flex items-center justify-between">
+                      <Link
+                        href={`/portal/admin/programs/${program.programId}`}
+                        className="group flex items-center gap-2 hover:text-primary transition-colors min-w-0"
+                      >
+                        <ClipboardList className="h-4 w-4 text-primary shrink-0" />
+                        <span className="text-sm font-medium truncate">
+                          {program.programName}
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
+                      </Link>
+                      <Button variant="outline" size="sm" asChild className="text-xs gap-1.5 shrink-0 ml-2">
+                        <Link
+                          href={`/portal/admin/programs/${program.programId}/baseline/${program.assignmentId}`}
+                        >
+                          <ClipboardCheck className="h-3.5 w-3.5" />
+                          {program.hasBaseline ? "Edit" : "Record"} Baseline
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2 ml-6">
+                      <Badge variant="outline" className="text-[10px]">
+                        {program.weeks} weeks
+                      </Badge>
+                      {program.progressionType !== "NONE" && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {program.progressionType}
+                        </Badge>
+                      )}
+                      {program.hasBaseline && (
+                        <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-700">
+                          Baseline set
+                        </Badge>
+                      )}
+                      <span className="text-[10px] text-muted-foreground">
+                        Started {formatDate(program.startDate)}
                       </span>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground transition-colors" />
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}

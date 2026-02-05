@@ -152,7 +152,10 @@ export async function getClientById(clientId: string) {
       db.programAssignment.findMany({
         where: { clientId, active: true },
         include: {
-          program: { select: { id: true, name: true } },
+          program: {
+            select: { id: true, name: true, weeks: true, progressionType: true },
+          },
+          baseline: { select: { id: true } },
         },
       }),
     ]);
@@ -197,6 +200,10 @@ export async function getClientById(clientId: string) {
       assignmentId: a.id,
       programId: a.program.id,
       programName: a.program.name,
+      weeks: a.program.weeks,
+      progressionType: a.program.progressionType,
+      startDate: a.startDate.toISOString(),
+      hasBaseline: !!a.baseline,
     })),
   };
 }
