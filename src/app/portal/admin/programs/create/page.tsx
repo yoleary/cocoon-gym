@@ -18,7 +18,6 @@ import {
   X,
 } from "lucide-react";
 import { createProgram } from "@/actions/program.actions";
-import { getExercises } from "@/actions/exercise.actions";
 import { RoleGuard } from "@/components/portal/role-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -934,13 +933,17 @@ function ExercisePickerDialog({
   const loadExercises = useCallback(async () => {
     setLoading(true);
     try {
-      const filters: any = { pageSize: 100 };
-      if (search) filters.search = search;
-      if (bodyRegion && bodyRegion !== "all") filters.bodyRegion = bodyRegion;
+      const params = new URLSearchParams();
+      params.set("pageSize", "100");
+      if (search) params.set("search", search);
+      if (bodyRegion && bodyRegion !== "all") params.set("bodyRegion", bodyRegion);
 
-      const result = await getExercises(filters);
+      const res = await fetch(`/api/exercises?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch exercises");
+
+      const data = await res.json();
       setExercises(
-        result.exercises.map((e) => ({
+        data.exercises.map((e: any) => ({
           id: e.id,
           name: e.name,
           bodyRegion: e.bodyRegion,
