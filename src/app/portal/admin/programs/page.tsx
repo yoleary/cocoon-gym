@@ -96,7 +96,7 @@ async function ProgramsContent({
         </div>
         {!assignClientId && (
           <Button asChild>
-            <Link href="/portal/admin/programs?create=true">
+            <Link href="/portal/admin/programs/create">
               <Plus className="h-4 w-4 mr-1.5" />
               Create Program
             </Link>
