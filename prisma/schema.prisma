@@ -261,14 +261,14 @@ model ProgramAssignment {
 }
 
 model WorkoutTemplate {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   programId String?
   trainerId String?
   name      String
-  order     Int     @default(0)
-  isLibrary Boolean @default(false)
+  order     Int      @default(0)
+  isLibrary Boolean  @default(false)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade)
   trainer   User?    @relation("TrainerWorkouts", fields: [trainerId], references: [id])
