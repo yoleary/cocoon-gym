@@ -315,13 +315,13 @@ export function SetLogger({
           </div>
 
           {/* Previous weight hint - only if different from current */}
-          {prevSet?.weight != null && prevSet.weight !== set.weight && (
+          {prevSessionSet?.weight != null && prevSessionSet.weight !== set.weight && (
             <button
               type="button"
               onClick={handleCopyPrevious}
               className="text-[10px] text-muted-foreground text-center tabular-nums hover:text-foreground transition-colors"
             >
-              Last: {prevSet.weight}kg (tap to copy)
+              Last: {prevSessionSet.weight}kg (tap to copy)
             </button>
           )}
         </div>
@@ -369,9 +369,9 @@ export function SetLogger({
           </div>
 
           {/* Previous reps hint */}
-          {prevSet?.reps != null && prevSet.reps !== set.reps && (
+          {prevSessionSet?.reps != null && prevSessionSet.reps !== set.reps && (
             <span className="text-[10px] text-muted-foreground text-center tabular-nums">
-              Last: {prevSet.reps}
+              Last: {prevSessionSet.reps}
             </span>
           )}
         </div>
