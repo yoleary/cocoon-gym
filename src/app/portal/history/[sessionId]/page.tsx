@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { DeleteSessionButton } from "@/components/workout/delete-session-button";
 
 // ─── Set type labels ────────────────────────────
 
@@ -102,13 +103,16 @@ export default async function SessionDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Back nav */}
-      <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link href="/portal/history">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Workout History
-        </Link>
-      </Button>
+      {/* Back nav + delete button */}
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" asChild className="-ml-2">
+          <Link href="/portal/history">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Workout History
+          </Link>
+        </Button>
+        <DeleteSessionButton sessionId={ws.id} />
+      </div>
 
       {/* Session header */}
       <Card className="border-border/50 bg-gradient-to-br from-green-500/5 via-card to-card">

@@ -5,6 +5,7 @@ import {
   Dumbbell,
   Layers,
   Play,
+  Zap,
 } from "lucide-react";
 import { getPrograms } from "@/actions/program.actions";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,35 @@ export default async function WorkoutsPage() {
           Choose a workout template from your assigned programs.
         </p>
       </div>
+
+      {/* Quick Workout Card */}
+      <Card className="border-border/50 bg-gradient-to-br from-primary/5 via-card to-card hover:border-primary/30 hover:shadow-md transition-all">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Quick Workout</CardTitle>
+                <CardDescription className="text-xs">
+                  Start an ad-hoc workout and add exercises on the fly
+                </CardDescription>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <Button className="w-full gap-1.5" asChild>
+            <Link href="/portal/workouts/live/new?quick=true">
+              <Play className="h-4 w-4" />
+              Start Quick Workout
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Separator />
 
       {/* Workout templates */}
       {allTemplates.length === 0 ? (

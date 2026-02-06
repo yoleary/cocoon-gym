@@ -21,6 +21,9 @@ interface LiveSessionActions {
   /** Jump to a specific exercise by index */
   setCurrentExercise: (index: number) => void;
 
+  /** Add a new exercise to the session (for quick workouts) */
+  addExercise: (exercise: LiveExercise) => void;
+
   /** Update a single field on an existing set */
   updateSet: (
     exerciseIndex: number,
@@ -51,6 +54,17 @@ interface LiveSessionActions {
 
   /** Wipe session state (after finishing or discarding) */
   clearSession: () => void;
+
+  // ── Full-screen set logger state ──────────────
+
+  /** Index of the currently focused set within the current exercise */
+  currentSetIndex: number;
+
+  /** Set the current set index */
+  setCurrentSet: (index: number) => void;
+
+  /** Advance to the next set, or next exercise if all sets done */
+  advanceToNextSet: () => void;
 }
 
 // ─── Combined store type ─────────────────────────
@@ -59,7 +73,7 @@ type LiveSessionStore = LiveSessionState & LiveSessionActions;
 
 // ─── Default state ───────────────────────────────
 
-const defaultState: LiveSessionState = {
+const defaultState: LiveSessionState & { currentSetIndex: number } = {
   sessionId: "",
   templateId: null,
   templateName: null,
@@ -67,6 +81,7 @@ const defaultState: LiveSessionState = {
   progressionType: null,
   totalWeeks: null,
   currentExerciseIndex: 0,
+  currentSetIndex: 0,
   exercises: [],
   isResting: false,
   restTimeRemaining: 0,
@@ -105,8 +120,45 @@ export const useLiveSessionStore = create<LiveSessionStore>()(
       setCurrentExercise: (index) => {
         const { exercises } = get();
         if (index >= 0 && index < exercises.length) {
-          set({ currentExerciseIndex: index });
+          set({ currentExerciseIndex: index, currentSetIndex: 0 });
         }
+      },
+
+      setCurrentSet: (index) => {
+        const { exercises, currentExerciseIndex } = get();
+        const exercise = exercises[currentExerciseIndex];
+        if (exercise && index >= 0 && index < exercise.sets.length) {
+          set({ currentSetIndex: index });
+        }
+      },
+
+      advanceToNextSet: () => {
+        const { exercises, currentExerciseIndex, currentSetIndex } = get();
+        const exercise = exercises[currentExerciseIndex];
+        if (!exercise) return;
+
+        // If there are more sets in this exercise, go to the next one
+        if (currentSetIndex < exercise.sets.length - 1) {
+          set({ currentSetIndex: currentSetIndex + 1 });
+          return;
+        }
+
+        // Otherwise, go to the first set of the next exercise
+        if (currentExerciseIndex < exercises.length - 1) {
+          set({
+            currentExerciseIndex: currentExerciseIndex + 1,
+            currentSetIndex: 0,
+          });
+        }
+        // If this was the last set of the last exercise, stay where we are
+      },
+
+      // ── Add exercise (for quick workouts) ────
+
+      addExercise: (exercise) => {
+        set((state) => ({
+          exercises: [...state.exercises, exercise],
+        }));
       },
 
       // ── Set mutations ─────────────────────────
@@ -202,6 +254,7 @@ export const useLiveSessionStore = create<LiveSessionStore>()(
         progressionType: state.progressionType,
         totalWeeks: state.totalWeeks,
         currentExerciseIndex: state.currentExerciseIndex,
+        currentSetIndex: state.currentSetIndex,
         exercises: state.exercises,
         sessionStartedAt: state.sessionStartedAt,
         isPaused: state.isPaused,

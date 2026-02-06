@@ -8,10 +8,12 @@ import {
   ChevronRight,
   Dumbbell,
   Loader2,
+  Maximize2,
+  Minimize2,
   Plus,
 } from "lucide-react";
 import { useLiveSessionStore } from "@/stores/live-session.store";
-import { startSession, logSet, completeSession } from "@/actions/session.actions";
+import { startSession, logSet, completeSession, abandonSession, addExerciseToSession } from "@/actions/session.actions";
 import { getProgramById, getPrograms } from "@/actions/program.actions";
 import { applyProgression } from "@/lib/progression";
 import type { LiveExercise, LiveSet, PRRecord, RecordType, ProgressionType } from "@/types";
@@ -25,6 +27,8 @@ import { SessionControls } from "@/components/workout/session-controls";
 import { PRCelebration } from "@/components/workout/pr-celebration";
 import { SessionSummary } from "@/components/workout/session-summary";
 import { PreviousPerformance } from "@/components/workout/previous-performance";
+import { ExerciseAddSheet } from "@/components/workout/exercise-add-sheet";
+import { FullscreenSetLogger } from "@/components/workout/fullscreen-set-logger";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // ─── Page ───────────────────────────────────────
@@ -46,6 +50,7 @@ export default function LiveSessionPage({
     progressionType,
     totalWeeks,
     currentExerciseIndex,
+    currentSetIndex,
     exercises,
     isResting,
     restTimeRemaining,
@@ -53,6 +58,8 @@ export default function LiveSessionPage({
     isPaused,
     initSession,
     setCurrentExercise,
+    setCurrentSet,
+    advanceToNextSet,
     updateSet,
     addSet,
     completeSet: markSetComplete,
@@ -81,9 +88,20 @@ export default function LiveSessionPage({
     value: number;
   } | null>(null);
 
+  // Fullscreen set logger mode (default on mobile)
+  const [isFullscreenMode, setIsFullscreenMode] = useState(false);
+
   // Touch / swipe support
   const touchStartX = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Detect mobile and enable fullscreen mode by default
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isMobile = window.innerWidth < 768;
+      setIsFullscreenMode(isMobile);
+    }
+  }, []);
 
   // ── Initialize session ────────────────────────
 
@@ -96,10 +114,11 @@ export default function LiveSessionPage({
           return;
         }
 
-        // Get templateId from search params for a new session
+        // Get templateId or quick param from search params for a new session
         const newTemplateId = searchParams.get("templateId");
+        const isQuickWorkout = searchParams.get("quick") === "true";
 
-        if (!newTemplateId) {
+        if (!newTemplateId && !isQuickWorkout) {
           // If no templateId and no existing session, redirect
           if (!sessionId) {
             router.push("/portal/workouts");
@@ -109,7 +128,29 @@ export default function LiveSessionPage({
           return;
         }
 
-        // Start a new session via server action
+        // Handle Quick Workout - no template
+        if (isQuickWorkout && !newTemplateId) {
+          const result = await startSession(null);
+          const newSessionId = result.sessionId;
+
+          // Init the store with empty exercises
+          initSession({
+            sessionId: newSessionId,
+            templateId: null,
+            templateName: "Quick Workout",
+            weekNumber: null,
+            progressionType: null,
+            totalWeeks: null,
+            exercises: [],
+          });
+
+          // Update URL to the actual session ID
+          router.replace(`/portal/workouts/live/${newSessionId}`);
+          setLoading(false);
+          return;
+        }
+
+        // Start a new session via server action (with template)
         const result = await startSession(newTemplateId);
         const newSessionId = result.sessionId;
         const sessionExercises = result.sessionExercises;
@@ -303,11 +344,41 @@ export default function LiveSessionPage({
         // Start rest timer after completing a set
         if (currentExercise.restSeconds > 0) {
           startRest(currentExercise.restSeconds);
+        } else {
+          // No rest timer - auto-advance to next set
+          advanceToNextSet();
         }
       }
     },
-    [currentExerciseIndex, currentExercise, markSetComplete, startRest]
+    [currentExerciseIndex, currentExercise, markSetComplete, startRest, advanceToNextSet]
   );
+
+  // ── Handle rest timer end - auto-advance ─────
+
+  useEffect(() => {
+    // When rest timer finishes, advance to next set
+    if (!isResting && restTimeRemaining === 0) {
+      // Small delay to ensure UI updates first
+      const timer = setTimeout(() => {
+        advanceToNextSet();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isResting, restTimeRemaining, advanceToNextSet]);
+
+  // ── Abandon session handler ───────────────────
+
+  const handleAbandonSession = useCallback(async () => {
+    if (!sessionId) return;
+
+    try {
+      await abandonSession(sessionId);
+      clearSession();
+      router.push("/portal/workouts");
+    } catch (err: any) {
+      setError(err.message ?? "Failed to abandon session.");
+    }
+  }, [sessionId, clearSession, router]);
 
   // ── Finish session handler ────────────────────
 
@@ -402,18 +473,46 @@ export default function LiveSessionPage({
     );
   }
 
-  // ── No exercises ──────────────────────────────
+  // ── Quick workout - no exercises yet ───────────
 
-  if (!currentExercise || exercises.length === 0) {
+  const isQuickWorkout = templateId === null;
+
+  if (exercises.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Dumbbell className="h-12 w-12 text-muted-foreground/30" />
-        <p className="text-sm text-muted-foreground">
-          No exercises loaded for this session.
-        </p>
-        <Button variant="outline" asChild>
-          <Link href="/portal/workouts">Back to Workouts</Link>
-        </Button>
+      <div className="flex flex-col min-h-[60vh]">
+        {/* Top bar for quick workout */}
+        <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-sm px-4 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="truncate text-sm font-semibold">
+                {templateName ?? "Quick Workout"}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Add exercises to get started
+              </p>
+            </div>
+            <SessionControls
+              sessionStartedAt={sessionStartedAt}
+              isPaused={isPaused}
+              onTogglePause={togglePause}
+              onFinish={handleFinishSession}
+              onAbandon={handleAbandonSession}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center flex-1 gap-4 p-4">
+          <Dumbbell className="h-12 w-12 text-muted-foreground/30" />
+          <div className="text-center">
+            <p className="text-sm font-medium mb-1">No exercises yet</p>
+            <p className="text-xs text-muted-foreground">
+              Add exercises to build your workout
+            </p>
+          </div>
+          <div className="w-full max-w-sm">
+            <ExerciseAddSheet sessionId={sessionId} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -444,6 +543,31 @@ export default function LiveSessionPage({
         />
       )}
 
+      {/* Fullscreen Set Logger overlay (mobile) */}
+      {isFullscreenMode && !isResting && currentExercise && (
+        <FullscreenSetLogger
+          exercise={currentExercise}
+          exerciseIndex={currentExerciseIndex}
+          setIndex={currentSetIndex}
+          totalExercises={exercises.length}
+          onUpdate={(data) => updateSet(currentExerciseIndex, currentSetIndex, data)}
+          onComplete={() => handleCompleteSet(currentSetIndex)}
+          onNext={() => advanceToNextSet()}
+          onPrev={() => {
+            if (currentSetIndex > 0) {
+              setCurrentSet(currentSetIndex - 1);
+            } else if (currentExerciseIndex > 0) {
+              setCurrentExercise(currentExerciseIndex - 1);
+            }
+          }}
+          onClose={() => setIsFullscreenMode(false)}
+          onSetChange={setCurrentSet}
+          onExerciseChange={setCurrentExercise}
+          previous={currentExercise.previous}
+          previousSetInWorkout={currentSetIndex > 0 ? currentExercise.sets[currentSetIndex - 1] : null}
+        />
+      )}
+
       {/* Top bar: session info + controls */}
       <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-sm px-4 py-2">
         <div className="flex items-center justify-between gap-2">
@@ -467,6 +591,7 @@ export default function LiveSessionPage({
             isPaused={isPaused}
             onTogglePause={togglePause}
             onFinish={handleFinishSession}
+            onAbandon={handleAbandonSession}
           />
         </div>
       </div>
@@ -474,16 +599,22 @@ export default function LiveSessionPage({
       {/* Exercise navigation sidebar (scrollable list) */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar: exercise list (hidden on mobile) */}
-        <div className="hidden md:block w-64 shrink-0 border-r overflow-y-auto p-2 space-y-1.5">
-          {exercises.map((exercise, index) => (
-            <ExerciseCard
-              key={`${exercise.exerciseId}-${index}`}
-              exercise={exercise}
-              index={index + 1}
-              isActive={index === currentExerciseIndex}
-              onSelect={() => setCurrentExercise(index)}
-            />
-          ))}
+        <div className="hidden md:flex md:flex-col w-64 shrink-0 border-r overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+            {exercises.map((exercise, index) => (
+              <ExerciseCard
+                key={`${exercise.exerciseId}-${index}`}
+                exercise={exercise}
+                index={index + 1}
+                isActive={index === currentExerciseIndex}
+                onSelect={() => setCurrentExercise(index)}
+              />
+            ))}
+          </div>
+          {/* Add exercise button in sidebar */}
+          <div className="p-2 border-t">
+            <ExerciseAddSheet sessionId={sessionId} />
+          </div>
         </div>
 
         {/* Main content: current exercise detail + set logger */}
@@ -594,6 +725,11 @@ export default function LiveSessionPage({
                 Add Set
               </Button>
             </div>
+
+            {/* Add exercise button (mobile only) */}
+            <div className="md:hidden pt-4">
+              <ExerciseAddSheet sessionId={sessionId} />
+            </div>
           </div>
         </div>
       </div>
@@ -649,6 +785,17 @@ export default function LiveSessionPage({
           >
             Next
             <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          {/* Fullscreen toggle */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 shrink-0 touch-manipulation"
+            onClick={() => setIsFullscreenMode(true)}
+            aria-label="Enter fullscreen mode"
+          >
+            <Maximize2 className="h-4 w-4" />
           </Button>
         </div>
       </div>

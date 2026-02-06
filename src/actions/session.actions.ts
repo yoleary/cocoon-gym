@@ -7,13 +7,13 @@ import { calculateE1RM, totalVolume } from "@/lib/metrics";
 import { calculateWeekNumber } from "@/lib/progression";
 import type { ProgressionType } from "@prisma/client";
 
-export async function startSession(templateId: string, weekNumber?: number) {
+export async function startSession(templateId?: string | null, weekNumber?: number) {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
 
   const userId = session.user.id!;
 
-  // Look up the program context for this template
+  // Look up the program context for this template (only if templateId is provided)
   const template = templateId
     ? await db.workoutTemplate.findUnique({
         where: { id: templateId },
@@ -82,7 +82,7 @@ export async function startSession(templateId: string, weekNumber?: number) {
   const workoutSession = await db.workoutSession.create({
     data: {
       userId,
-      templateId,
+      templateId: templateId ?? null,
       weekNumber: computedWeekNumber,
       loggedBy: userId,
       startedAt: new Date(),
@@ -361,4 +361,143 @@ export async function getSessionDetail(sessionId: string) {
       },
     },
   });
+}
+
+// ─── Abandon in-progress session ─────────────────
+
+export async function abandonSession(sessionId: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const userId = session.user.id!;
+
+  // Verify the session exists and belongs to the user
+  const workoutSession = await db.workoutSession.findUnique({
+    where: { id: sessionId },
+    select: { userId: true, completedAt: true },
+  });
+
+  if (!workoutSession) {
+    throw new Error("Session not found");
+  }
+
+  if (workoutSession.userId !== userId) {
+    throw new Error("Unauthorized: You do not own this session");
+  }
+
+  if (workoutSession.completedAt) {
+    throw new Error("Cannot abandon a completed session");
+  }
+
+  // Delete the session (cascade deletes exercises and sets)
+  await db.workoutSession.delete({
+    where: { id: sessionId },
+  });
+
+  revalidatePath("/portal/workouts");
+  revalidatePath("/portal/history");
+
+  return { success: true };
+}
+
+// ─── Delete completed session from history ───────
+
+export async function deleteSession(sessionId: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const userId = session.user.id!;
+  const role = (session.user as any).role;
+
+  // Verify the session exists
+  const workoutSession = await db.workoutSession.findUnique({
+    where: { id: sessionId },
+    select: { userId: true, completedAt: true },
+  });
+
+  if (!workoutSession) {
+    throw new Error("Session not found");
+  }
+
+  // Trainers can delete any session; clients can only delete their own
+  if (role !== "TRAINER" && workoutSession.userId !== userId) {
+    throw new Error("Unauthorized: You do not own this session");
+  }
+
+  // Delete the session (cascade deletes exercises and sets)
+  await db.workoutSession.delete({
+    where: { id: sessionId },
+  });
+
+  revalidatePath("/portal/history");
+  revalidatePath("/portal/progress");
+  revalidatePath("/portal/dashboard");
+
+  return { success: true };
+}
+
+// ─── Add exercise to an existing session ─────────
+
+export async function addExerciseToSession(sessionId: string, exerciseId: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const userId = session.user.id!;
+
+  // Verify the session exists and belongs to the user
+  const workoutSession = await db.workoutSession.findUnique({
+    where: { id: sessionId },
+    include: {
+      exercises: {
+        select: { order: true },
+        orderBy: { order: "desc" },
+        take: 1,
+      },
+    },
+  });
+
+  if (!workoutSession) {
+    throw new Error("Session not found");
+  }
+
+  if (workoutSession.userId !== userId) {
+    throw new Error("Unauthorized: You do not own this session");
+  }
+
+  if (workoutSession.completedAt) {
+    throw new Error("Cannot add exercises to a completed session");
+  }
+
+  // Get the exercise details
+  const exercise = await db.exercise.findUnique({
+    where: { id: exerciseId },
+    select: { id: true, name: true },
+  });
+
+  if (!exercise) {
+    throw new Error("Exercise not found");
+  }
+
+  // Determine next order and position
+  const lastOrder = workoutSession.exercises[0]?.order ?? -1;
+  const nextOrder = lastOrder + 1;
+  const position = String.fromCharCode(65 + nextOrder); // A, B, C, etc.
+
+  // Create the session exercise
+  const sessionExercise = await db.sessionExercise.create({
+    data: {
+      sessionId,
+      exerciseId,
+      position,
+      order: nextOrder,
+    },
+  });
+
+  return {
+    sessionExerciseId: sessionExercise.id,
+    exerciseId: exercise.id,
+    exerciseName: exercise.name,
+    position,
+    order: nextOrder,
+  };
 }

@@ -1,8 +1,19 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Pause, Play, Square, Timer } from "lucide-react";
+import { Pause, Play, Square, Timer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +34,7 @@ interface SessionControlsProps {
   isPaused: boolean;
   onTogglePause: () => void;
   onFinish: () => void;
+  onAbandon?: () => void;
 }
 
 // ─── Component ───────────────────────────────────
@@ -32,6 +44,7 @@ export function SessionControls({
   isPaused,
   onTogglePause,
   onFinish,
+  onAbandon,
 }: SessionControlsProps) {
   const [elapsed, setElapsed] = useState(0);
 
@@ -83,6 +96,42 @@ export function SessionControls({
           <Pause className="h-4 w-4" />
         )}
       </Button>
+
+      {/* Abandon workout (with confirmation) */}
+      {onAbandon && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 touch-manipulation text-muted-foreground hover:text-destructive hover:border-destructive"
+              aria-label="Abandon workout"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+
+          <AlertDialogContent className="sm:max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Abandon Workout?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete this workout session and all logged
+                sets. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <AlertDialogFooter className="gap-2 sm:gap-0">
+              <AlertDialogCancel>Keep Going</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onAbandon}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Abandon Workout
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {/* Finish workout (with confirmation) */}
       <Dialog>
