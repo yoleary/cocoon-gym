@@ -360,3 +360,141 @@ export async function getExerciseHistory(exerciseId: string, userId?: string) {
     };
   });
 }
+
+// ─── Exercise suggestions for quick workouts ─────
+
+export type FocusArea = "PUSH" | "PULL" | "LEGS" | "CORE" | "FULL_BODY";
+
+const FOCUS_AREA_PATTERNS: Record<FocusArea, MovementPattern[]> = {
+  PUSH: ["HORIZONTAL_PUSH", "VERTICAL_PUSH"],
+  PULL: ["HORIZONTAL_PULL", "VERTICAL_PULL"],
+  LEGS: ["SQUAT", "LUNGE", "HIP_HINGE"],
+  CORE: ["PLANK", "ROTATION", "ANTI_ROTATION"],
+  FULL_BODY: ["CARRY", "HIP_HINGE", "SQUAT", "HORIZONTAL_PUSH", "HORIZONTAL_PULL"],
+};
+
+const FOCUS_AREA_REGIONS: Record<FocusArea, BodyRegion[]> = {
+  PUSH: ["UPPER_BODY"],
+  PULL: ["UPPER_BODY"],
+  LEGS: ["LOWER_BODY"],
+  CORE: ["CORE"],
+  FULL_BODY: ["FULL_BODY", "UPPER_BODY", "LOWER_BODY"],
+};
+
+export async function getExerciseSuggestions(focusArea?: FocusArea) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const userId = session.user.id!;
+
+  // Get user's exercise history with frequency counts
+  const exerciseHistory = await db.sessionExercise.groupBy({
+    by: ["exerciseId"],
+    where: {
+      session: {
+        userId,
+        completedAt: { not: null },
+      },
+    },
+    _count: { exerciseId: true },
+    orderBy: { _count: { exerciseId: "desc" } },
+  });
+
+  const usedExerciseIds = new Set(exerciseHistory.map((e) => e.exerciseId));
+  const frequencyMap = new Map(
+    exerciseHistory.map((e) => [e.exerciseId, e._count.exerciseId])
+  );
+
+  // Build filter for focus area
+  const where: any = {};
+  if (focusArea) {
+    const patterns = FOCUS_AREA_PATTERNS[focusArea];
+    const regions = FOCUS_AREA_REGIONS[focusArea];
+    where.OR = [
+      { movementPattern: { in: patterns } },
+      { bodyRegion: { in: regions } },
+    ];
+  }
+
+  // Get all matching exercises
+  const exercises = await db.exercise.findMany({
+    where,
+    include: {
+      equipment: { include: { equipment: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  // Split into frequent (go-tos) and new (to try)
+  const goTos: typeof exercises = [];
+  const toTry: typeof exercises = [];
+
+  for (const ex of exercises) {
+    if (usedExerciseIds.has(ex.id)) {
+      goTos.push(ex);
+    } else {
+      toTry.push(ex);
+    }
+  }
+
+  // Sort go-tos by frequency (most used first)
+  goTos.sort((a, b) => {
+    const freqA = frequencyMap.get(a.id) ?? 0;
+    const freqB = frequencyMap.get(b.id) ?? 0;
+    return freqB - freqA;
+  });
+
+  // Format response
+  const formatExercise = (ex: (typeof exercises)[0], frequency?: number) => ({
+    id: ex.id,
+    name: ex.name,
+    bodyRegion: ex.bodyRegion,
+    movementPattern: ex.movementPattern,
+    isCompound: ex.isCompound,
+    equipment: ex.equipment.map((e) => e.equipment.name),
+    frequency: frequency ?? 0,
+  });
+
+  return {
+    goTos: goTos.slice(0, 10).map((ex) => formatExercise(ex, frequencyMap.get(ex.id))),
+    toTry: toTry.slice(0, 10).map((ex) => formatExercise(ex)),
+    totalAvailable: exercises.length,
+  };
+}
+
+// ─── Generate a random balanced workout ──────────
+
+export async function generateRandomWorkout(focusArea?: FocusArea, exerciseCount = 5) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const { goTos, toTry } = await getExerciseSuggestions(focusArea);
+
+  // Mix: ~60% familiar, ~40% new (if available)
+  const familiarCount = Math.ceil(exerciseCount * 0.6);
+  const newCount = exerciseCount - familiarCount;
+
+  const selected: typeof goTos = [];
+
+  // Shuffle and pick from go-tos
+  const shuffledGoTos = [...goTos].sort(() => Math.random() - 0.5);
+  selected.push(...shuffledGoTos.slice(0, familiarCount));
+
+  // Shuffle and pick from new exercises
+  const shuffledNew = [...toTry].sort(() => Math.random() - 0.5);
+  selected.push(...shuffledNew.slice(0, newCount));
+
+  // If we don't have enough new, fill with more familiar
+  if (selected.length < exerciseCount) {
+    const remaining = shuffledGoTos.slice(familiarCount, familiarCount + (exerciseCount - selected.length));
+    selected.push(...remaining);
+  }
+
+  // If still not enough, add more from toTry
+  if (selected.length < exerciseCount) {
+    const remaining = shuffledNew.slice(newCount, newCount + (exerciseCount - selected.length));
+    selected.push(...remaining);
+  }
+
+  return selected;
+}

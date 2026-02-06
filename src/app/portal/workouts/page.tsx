@@ -53,7 +53,7 @@ export default async function WorkoutsPage() {
               <div>
                 <CardTitle className="text-base">Quick Workout</CardTitle>
                 <CardDescription className="text-xs">
-                  Start an ad-hoc workout and add exercises on the fly
+                  Pick a focus, select exercises, and start training
                 </CardDescription>
               </div>
             </div>
@@ -61,7 +61,7 @@ export default async function WorkoutsPage() {
         </CardHeader>
         <CardContent className="pt-0">
           <Button className="w-full gap-1.5" asChild>
-            <Link href="/portal/workouts/live/new?quick=true">
+            <Link href="/portal/workouts/quick">
               <Play className="h-4 w-4" />
               Start Quick Workout
             </Link>
