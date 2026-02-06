@@ -573,6 +573,9 @@ export default function LiveSessionPage({
                   set={set}
                   setIndex={setIndex}
                   previous={currentExercise.previous}
+                  previousSetInWorkout={setIndex > 0 ? currentExercise.sets[setIndex - 1] : null}
+                  targetWeight={currentExercise.targetWeightKg}
+                  targetReps={currentExercise.targetReps}
                   onUpdate={(data) =>
                     updateSet(currentExerciseIndex, setIndex, data)
                   }
