@@ -72,6 +72,7 @@ export interface LiveExercise {
   progressionNote: string | null;
   suggestedWeightChange: string | null;
   targetWeightKg: number | null;
+  targetRpe: string | null;
 }
 
 export interface LiveSessionState {

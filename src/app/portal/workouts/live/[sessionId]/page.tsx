@@ -195,6 +195,7 @@ export default function LiveSessionPage({
             let progressionNote: string | null = null;
             let suggestedWeightChange: string | null = null;
             let targetWeightKg: number | null = null;
+            let targetRpe: string | null = null;
 
             // Apply progression if applicable
             if (
@@ -222,6 +223,7 @@ export default function LiveSessionPage({
               progressionNote = prog.progressionNote;
               suggestedWeightChange = prog.suggestedWeightChange;
               targetWeightKg = prog.targetWeightKg;
+              targetRpe = prog.targetRpe;
             }
 
             const sets: LiveSet[] = Array.from(
@@ -263,6 +265,7 @@ export default function LiveSessionPage({
               progressionNote,
               suggestedWeightChange,
               targetWeightKg,
+              targetRpe,
             });
           }
         }
@@ -646,7 +649,7 @@ export default function LiveSessionPage({
                 />
               </div>
 
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground items-center">
                 <span>
                   {currentExercise.targetSets} x {currentExercise.targetReps}
                 </span>
@@ -655,6 +658,18 @@ export default function LiveSessionPage({
                     {currentExercise.targetWeight}
                   </span>
                 )}
+                {currentExercise.targetRpe && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
+                    RPE {currentExercise.targetRpe}
+                  </Badge>
+                )}
+                {currentExercise.targetWeightKg != null &&
+                  currentExercise.previous?.bestE1RM != null &&
+                  currentExercise.previous.bestE1RM > 0 && (
+                    <span className="text-primary/70 font-medium">
+                      {Math.round((currentExercise.targetWeightKg / currentExercise.previous.bestE1RM) * 100)}% of e1RM
+                    </span>
+                  )}
                 {currentExercise.tempo && (
                   <span>Tempo: {currentExercise.tempo}</span>
                 )}
@@ -721,6 +736,7 @@ export default function LiveSessionPage({
                   previousSetInWorkout={setIndex > 0 ? currentExercise.sets[setIndex - 1] : null}
                   targetWeight={currentExercise.targetWeightKg}
                   targetReps={currentExercise.targetReps}
+                  targetRpe={currentExercise.targetRpe}
                   onUpdate={(data) =>
                     updateSet(currentExerciseIndex, setIndex, data)
                   }

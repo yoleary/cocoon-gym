@@ -54,7 +54,9 @@ interface SetLoggerProps {
   /** Target reps from program (e.g., "8-12" or "6") */
   targetReps?: string | null;
   weightIncrement?: WeightIncrement;
-  onUpdate: (data: Partial<Pick<LiveSet, "weight" | "reps" | "setType">>) => void;
+  /** Target RPE range from progression (e.g. "7-8") */
+  targetRpe?: string | null;
+  onUpdate: (data: Partial<Pick<LiveSet, "weight" | "reps" | "rpe" | "setType">>) => void;
   onComplete: () => void;
 }
 
@@ -67,6 +69,7 @@ export function SetLogger({
   previousSetInWorkout,
   targetWeight,
   targetReps,
+  targetRpe,
   weightIncrement = 2.5,
   onUpdate,
   onComplete,
@@ -391,6 +394,38 @@ export function SetLogger({
           <Check className="h-6 w-6" />
         </Button>
       </div>
+
+      {/* RPE selector — shown after set is completed */}
+      {set.completed && (
+        <div className="flex items-center gap-2 pl-11">
+          <span className="text-[10px] text-muted-foreground shrink-0">RPE</span>
+          <div className="flex gap-1">
+            {[6, 7, 8, 9, 10].map((rpe) => (
+              <button
+                key={rpe}
+                type="button"
+                onClick={() => {
+                  onUpdate({ rpe: set.rpe === rpe ? null : rpe });
+                  hapticFeedback("light");
+                }}
+                className={cn(
+                  "h-7 w-7 rounded-md text-xs font-medium transition-colors touch-manipulation",
+                  set.rpe === rpe
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {rpe}
+              </button>
+            ))}
+          </div>
+          {targetRpe && !set.rpe && (
+            <span className="text-[10px] text-muted-foreground/60">
+              Target: {targetRpe}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

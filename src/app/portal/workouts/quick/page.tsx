@@ -226,6 +226,7 @@ export default function QuickWorkoutPage() {
           progressionNote: null,
           suggestedWeightChange: null,
           targetWeightKg: null,
+          targetRpe: null,
         });
 
         order++;

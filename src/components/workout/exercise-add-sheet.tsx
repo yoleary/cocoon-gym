@@ -108,6 +108,7 @@ export function ExerciseAddSheet({
         progressionNote: null,
         suggestedWeightChange: null,
         targetWeightKg: null,
+        targetRpe: null,
       };
 
       // Add to store
