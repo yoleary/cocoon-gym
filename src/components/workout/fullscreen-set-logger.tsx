@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ExerciseInfoPanel } from "@/components/workout/exercise-info-panel";
 
 // ─── Set type display config ─────────────────────
 
@@ -288,13 +289,21 @@ export function FullscreenSetLogger({
         {/* Exercise name */}
         <h1 className="text-2xl font-bold text-center mb-1">{exercise.name}</h1>
 
-        {/* Set type badge */}
-        <Badge
-          variant="outline"
-          className={cn("text-sm px-3 py-1 mb-8", typeConfig.color)}
-        >
-          {typeConfig.fullLabel}
-        </Badge>
+        {/* How to + Set type badge */}
+        <div className="flex items-center gap-3 mb-8">
+          <Badge
+            variant="outline"
+            className={cn("text-sm px-3 py-1", typeConfig.color)}
+          >
+            {typeConfig.fullLabel}
+          </Badge>
+          <ExerciseInfoPanel
+            exerciseId={exercise.exerciseId}
+            exerciseName={exercise.name}
+            trainerNotes={exercise.notes}
+            compact
+          />
+        </div>
 
         {/* Weight input */}
         <div className="w-full max-w-xs mb-6">

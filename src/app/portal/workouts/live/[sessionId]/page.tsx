@@ -29,6 +29,7 @@ import { SessionSummary } from "@/components/workout/session-summary";
 import { PreviousPerformance } from "@/components/workout/previous-performance";
 import { ExerciseAddSheet } from "@/components/workout/exercise-add-sheet";
 import { FullscreenSetLogger } from "@/components/workout/fullscreen-set-logger";
+import { ExerciseInfoPanel } from "@/components/workout/exercise-info-panel";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // ─── Page ───────────────────────────────────────
@@ -630,6 +631,11 @@ export default function LiveSessionPage({
                   {currentExercise.position}
                 </Badge>
                 <h2 className="text-lg font-bold">{currentExercise.name}</h2>
+                <ExerciseInfoPanel
+                  exerciseId={currentExercise.exerciseId}
+                  exerciseName={currentExercise.name}
+                  trainerNotes={currentExercise.notes}
+                />
               </div>
 
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
