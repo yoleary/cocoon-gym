@@ -1,10 +1,15 @@
-const CACHE_NAME = "cocoon-gym-v1";
+const CACHE_NAME = "cocoon-gym-v2";
+const OFFLINE_URL = "/offline";
+
 const STATIC_ASSETS = [
   "/",
+  "/offline",
   "/portal/dashboard",
   "/portal/nutrition",
   "/portal/nutrition/food-guide",
   "/manifest.json",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -31,33 +36,34 @@ self.addEventListener("fetch", (event) => {
 
   if (request.method !== "GET") return;
 
-  // API calls: network first, fallback to cache
-  if (url.pathname.startsWith("/api/")) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+  // Server actions / API calls: network only (no caching)
+  if (url.pathname.startsWith("/api/") || request.headers.get("next-action")) {
     return;
   }
 
-  // Static assets: cache first
+  // Static assets: cache first, then network
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icons/") ||
-    url.pathname.startsWith("/images/")
+    url.pathname.startsWith("/images/") ||
+    url.pathname.match(/\.(png|jpg|jpeg|webp|svg|ico|woff2?)$/)
   ) {
     event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request))
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        });
+      })
     );
     return;
   }
 
-  // Pages: network first, fallback to cache
+  // Pages: network first, fallback to cache, then offline page
   event.respondWith(
     fetch(request)
       .then((response) => {
@@ -67,6 +73,8 @@ self.addEventListener("fetch", (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(request))
+      .catch(() =>
+        caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL))
+      )
   );
 });
