@@ -98,6 +98,8 @@ model User {
   programsCreated   Program[]
   recordedBaselines ClientBaseline[] @relation("RecordedBaselines")
   workoutLibrary    WorkoutTemplate[] @relation("TrainerWorkouts")
+  trainerNotes      ClientExerciseNote[] @relation("TrainerNotes")
+  clientNotes       ClientExerciseNote[] @relation("ClientNotes")
 
   accounts      Account[]
   authSessions  AuthSession[]
@@ -199,6 +201,7 @@ model Exercise {
   sessionExercises  SessionExercise[]
   personalRecords   PersonalRecord[]
   exerciseBaselines ExerciseBaseline[]
+  clientNotes       ClientExerciseNote[]
 
   @@map("exercises")
 }
@@ -453,4 +456,22 @@ model UserAchievement {
 
   @@unique([userId, achievementId])
   @@map("user_achievements")
+}
+
+// ─── CLIENT EXERCISE NOTES ───────────────────────
+
+model ClientExerciseNote {
+  id         String   @id @default(cuid())
+  trainerId  String
+  clientId   String
+  exerciseId String
+  note       String
+  updatedAt  DateTime @updatedAt
+
+  trainer  User     @relation("TrainerNotes", fields: [trainerId], references: [id])
+  client   User     @relation("ClientNotes", fields: [clientId], references: [id])
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@unique([trainerId, clientId, exerciseId])
+  @@map("client_exercise_notes")
 }

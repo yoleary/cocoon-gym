@@ -14,6 +14,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { RoleGuard } from "@/components/portal/role-guard";
+import { ClientExerciseNotes } from "@/components/admin/client-exercise-notes";
 import { getClientById } from "@/actions/client.actions";
 import { formatDate, formatDuration, formatRelativeDate, formatWeight } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -295,6 +296,19 @@ async function ClientDetailContent({ clientId }: { clientId: string }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Exercise Notes */}
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Exercise Notes</CardTitle>
+          <CardDescription>
+            Per-exercise coaching notes for this client (visible during workouts)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ClientExerciseNotes clientId={clientId} />
+        </CardContent>
+      </Card>
 
       {/* Client meta */}
       <Card className="border-border/50">

@@ -15,6 +15,7 @@ import {
 import { useLiveSessionStore } from "@/stores/live-session.store";
 import { startSession, logSet, completeSession, abandonSession, addExerciseToSession } from "@/actions/session.actions";
 import { getProgramById, getPrograms } from "@/actions/program.actions";
+import { getClientExerciseNotes } from "@/actions/client-notes.actions";
 import { applyProgression } from "@/lib/progression";
 import type { LiveExercise, LiveSet, PRRecord, RecordType, ProgressionType } from "@/types";
 import { cn } from "@/lib/utils";
@@ -183,6 +184,15 @@ export default function LiveSessionPage({
           return;
         }
 
+        // Fetch trainer notes for this client's exercises
+        const allExerciseIds = fullTemplate.blocks.flatMap((b: any) =>
+          b.exercises.map((e: any) => e.exerciseId)
+        );
+        const trainerNotes = await getClientExerciseNotes(
+          "",
+          allExerciseIds
+        ).catch(() => ({} as Record<string, string>));
+
         // Build LiveExercise array from template data
         const liveExercises: LiveExercise[] = [];
 
@@ -256,7 +266,7 @@ export default function LiveSessionPage({
               targetWeight,
               tempo: ex.tempo ?? null,
               restSeconds,
-              notes: ex.notes ?? null,
+              notes: [ex.notes, trainerNotes[ex.exerciseId]].filter(Boolean).join("\n\n") || null,
               videoUrl: ex.videoUrl ?? null,
               isSuperset: block.isSuperset,
               supersetGroupLabel: block.isSuperset ? block.label : null,
