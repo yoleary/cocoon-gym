@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollInput } from "./scroll-input";
 import { ExerciseInfoPanel } from "@/components/workout/exercise-info-panel";
 
 // ─── Set type display config ─────────────────────
@@ -320,22 +321,18 @@ export function FullscreenSetLogger({
               <Minus className="h-6 w-6" />
             </Button>
 
-            <div className="relative flex-1">
-              <Input
-                type="number"
-                inputMode="decimal"
-                step={2.5}
-                min={0}
-                placeholder={planWeight?.toString() ?? prevSessionSet?.weight?.toString() ?? "0"}
-                value={localWeight}
-                onChange={(e) => handleWeightChange(e.target.value)}
-                disabled={set.completed}
-                className="h-16 text-center text-2xl font-bold tabular-nums pr-10"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground pointer-events-none">
-                kg
-              </span>
-            </div>
+            <ScrollInput
+              value={localWeight}
+              step={2.5}
+              min={0}
+              inputMode="decimal"
+              placeholder={planWeight?.toString() ?? prevSessionSet?.weight?.toString() ?? "0"}
+              onChange={handleWeightChange}
+              onStep={(dir) => stepWeight(dir)}
+              disabled={set.completed}
+              suffix="kg"
+              className="h-16 text-2xl font-bold pr-10"
+            />
 
             <Button
               type="button"
@@ -366,21 +363,18 @@ export function FullscreenSetLogger({
               <Minus className="h-6 w-6" />
             </Button>
 
-            <div className="relative flex-1">
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                placeholder={planReps?.toString() ?? prevSessionSet?.reps?.toString() ?? "0"}
-                value={localReps}
-                onChange={(e) => handleRepsChange(e.target.value)}
-                disabled={set.completed}
-                className="h-16 text-center text-2xl font-bold tabular-nums pr-12"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground pointer-events-none">
-                reps
-              </span>
-            </div>
+            <ScrollInput
+              value={localReps}
+              step={1}
+              min={0}
+              inputMode="numeric"
+              placeholder={planReps?.toString() ?? prevSessionSet?.reps?.toString() ?? "0"}
+              onChange={handleRepsChange}
+              onStep={(dir) => stepReps(dir)}
+              disabled={set.completed}
+              suffix="reps"
+              className="h-16 text-2xl font-bold pr-12"
+            />
 
             <Button
               type="button"
