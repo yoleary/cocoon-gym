@@ -3,13 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Trash2, Wand2 } from "lucide-react";
 import { RoleGuard } from "@/components/portal/role-guard";
 import { getProgramById } from "@/actions/program.actions";
 import {
   getBaseline,
   saveBaseline,
   deleteBaseline,
+  detectBaselinesFromHistory,
 } from "@/actions/baseline.actions";
 import { ProgressionPreviewGrid } from "@/components/workout/progression-preview-grid";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,8 @@ function BaselineContent({
   // Exercise baselines
   const [exerciseRows, setExerciseRows] = useState<ExerciseRow[]>([]);
   const [hasExistingBaseline, setHasExistingBaseline] = useState(false);
+  const [detecting, setDetecting] = useState(false);
+  const [detectedCount, setDetectedCount] = useState<number | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -177,6 +180,38 @@ function BaselineContent({
       alert(err.message ?? "Failed to delete baseline");
     }
   }, [assignmentId, router]);
+
+  const handleAutoDetect = useCallback(async () => {
+    setDetecting(true);
+    setDetectedCount(null);
+    try {
+      const exerciseIds = exerciseRows.map((r) => r.exerciseId);
+      const detected = await detectBaselinesFromHistory(assignmentId, exerciseIds);
+
+      if (detected.length === 0) {
+        setDetectedCount(0);
+        return;
+      }
+
+      // Only fill exercises that don't already have a starting weight
+      setExerciseRows((prev) =>
+        prev.map((r) => {
+          if (r.startingWeight) return r; // Don't overwrite existing values
+          const match = detected.find((d) => d.exerciseId === r.exerciseId);
+          if (match) {
+            return { ...r, startingWeight: match.weight.toString() };
+          }
+          return r;
+        })
+      );
+
+      setDetectedCount(detected.length);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to detect baselines");
+    } finally {
+      setDetecting(false);
+    }
+  }, [assignmentId, exerciseRows]);
 
   const updateStartingWeight = (exerciseId: string, value: string) => {
     setExerciseRows((prev) =>
@@ -304,13 +339,38 @@ function BaselineContent({
       {/* Per-exercise starting weights */}
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle className="text-base">
-            Starting Weights per Exercise
-          </CardTitle>
-          <CardDescription>
-            Enter the weight (kg) the client can currently handle for each
-            exercise. Leave blank for exercises without baseline data.
-          </CardDescription>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle className="text-base">
+                Starting Weights per Exercise
+              </CardTitle>
+              <CardDescription>
+                Enter the weight (kg) the client can currently handle for each
+                exercise. Leave blank for exercises without baseline data.
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAutoDetect}
+              disabled={detecting}
+              className="shrink-0 gap-1.5"
+            >
+              {detecting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wand2 className="h-4 w-4" />
+              )}
+              Auto-fill from history
+            </Button>
+          </div>
+          {detectedCount != null && (
+            <p className={`text-xs mt-2 ${detectedCount > 0 ? "text-primary" : "text-muted-foreground"}`}>
+              {detectedCount > 0
+                ? `Found weights for ${detectedCount} exercise${detectedCount !== 1 ? "s" : ""} from previous sessions.`
+                : "No previous session data found for this client."}
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

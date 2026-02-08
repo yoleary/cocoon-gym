@@ -22,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { DuplicateProgramButton } from "@/components/admin/duplicate-program-button";
 
 export default async function ProgramsPage({
   searchParams,
@@ -174,14 +175,23 @@ async function ProgramsContent({
                           ? `${(program as any).activeAssignments} client${(program as any).activeAssignments !== 1 ? "s" : ""}`
                           : "Assigned"}
                       </span>
-                      <span>
-                        Updated{" "}
-                        {formatRelativeDate(
-                          (program as any).updatedAt ??
-                            (program as any).createdAt ??
-                            new Date().toISOString()
+                      <div className="flex items-center gap-1">
+                        {!assignClientId && (
+                          <DuplicateProgramButton
+                            programId={program.id}
+                            programName={program.name}
+                            variant="icon"
+                          />
                         )}
-                      </span>
+                        <span>
+                          Updated{" "}
+                          {formatRelativeDate(
+                            (program as any).updatedAt ??
+                              (program as any).createdAt ??
+                              new Date().toISOString()
+                          )}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Template names */}

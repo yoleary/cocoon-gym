@@ -168,3 +168,73 @@ export async function deleteBaseline(assignmentId: string) {
 
   return { success: true };
 }
+
+// ─── Auto-detect baselines from client history ──
+
+export async function detectBaselinesFromHistory(
+  assignmentId: string,
+  exerciseIds: string[]
+) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const role = (session.user as any).role;
+  if (role !== "TRAINER") throw new Error("Only trainers can detect baselines");
+
+  const userId = session.user.id!;
+
+  // Verify assignment and get client ID
+  const assignment = await db.programAssignment.findUnique({
+    where: { id: assignmentId },
+    include: { program: { select: { trainerId: true } } },
+  });
+
+  if (!assignment) throw new Error("Assignment not found");
+  if (assignment.program.trainerId !== userId)
+    throw new Error("You do not own this program");
+
+  const clientId = assignment.clientId;
+
+  // For each exercise, find the most recent completed working set with a weight
+  const results: Array<{
+    exerciseId: string;
+    weight: number;
+    reps: number | null;
+  }> = [];
+
+  for (const exerciseId of exerciseIds) {
+    const latestSet = await db.exerciseSet.findFirst({
+      where: {
+        completed: true,
+        weight: { not: null },
+        setType: "WORKING",
+        sessionExercise: {
+          exerciseId,
+          session: {
+            userId: clientId,
+            completedAt: { not: null },
+          },
+        },
+      },
+      orderBy: {
+        sessionExercise: {
+          session: { completedAt: "desc" },
+        },
+      },
+      select: {
+        weight: true,
+        reps: true,
+      },
+    });
+
+    if (latestSet?.weight != null) {
+      results.push({
+        exerciseId,
+        weight: latestSet.weight,
+        reps: latestSet.reps,
+      });
+    }
+  }
+
+  return results;
+}

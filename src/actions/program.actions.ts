@@ -410,6 +410,80 @@ export async function unassignProgram(assignmentId: string) {
   return { success: true };
 }
 
+// ─── Duplicate program (trainer only) ────────────
+
+export async function duplicateProgram(programId: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const role = (session.user as any).role;
+  if (role !== "TRAINER") throw new Error("Only trainers can duplicate programs");
+
+  const trainerId = session.user.id!;
+
+  // Fetch the source program with full structure
+  const source = await db.program.findUnique({
+    where: { id: programId },
+    include: {
+      templates: {
+        include: {
+          blocks: {
+            include: {
+              exercises: { orderBy: { order: "asc" } },
+            },
+            orderBy: { order: "asc" },
+          },
+        },
+        orderBy: { order: "asc" },
+      },
+    },
+  });
+
+  if (!source) throw new Error("Program not found");
+  if (source.trainerId !== trainerId) throw new Error("You do not own this program");
+
+  // Create duplicate with nested templates, blocks, and exercises
+  const duplicate = await db.program.create({
+    data: {
+      name: `${source.name} (Copy)`,
+      description: source.description,
+      weeks: source.weeks,
+      progressionType: source.progressionType,
+      trainerId,
+      templates: {
+        create: source.templates.map((t) => ({
+          name: t.name,
+          order: t.order,
+          blocks: {
+            create: t.blocks.map((b) => ({
+              label: b.label,
+              order: b.order,
+              isSuperset: b.isSuperset,
+              exercises: {
+                create: b.exercises.map((e) => ({
+                  exerciseId: e.exerciseId,
+                  position: e.position,
+                  order: e.order,
+                  targetSets: e.targetSets,
+                  targetReps: e.targetReps,
+                  targetWeight: e.targetWeight,
+                  tempo: e.tempo,
+                  restSeconds: e.restSeconds,
+                  notes: e.notes,
+                })),
+              },
+            })),
+          },
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/portal/admin/programs");
+
+  return { id: duplicate.id, name: duplicate.name };
+}
+
 // ─── Get programs assigned to a client ───────────
 
 export async function getClientPrograms(clientId: string) {

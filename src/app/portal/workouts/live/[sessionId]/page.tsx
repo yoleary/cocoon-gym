@@ -15,6 +15,7 @@ import {
 import { useLiveSessionStore } from "@/stores/live-session.store";
 import { startSession, logSet, completeSession, abandonSession, addExerciseToSession } from "@/actions/session.actions";
 import { getProgramById, getPrograms } from "@/actions/program.actions";
+import { getClientExerciseNotes } from "@/actions/client-notes.actions";
 import { applyProgression } from "@/lib/progression";
 import type { LiveExercise, LiveSet, PRRecord, RecordType, ProgressionType } from "@/types";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ import { SessionSummary } from "@/components/workout/session-summary";
 import { PreviousPerformance } from "@/components/workout/previous-performance";
 import { ExerciseAddSheet } from "@/components/workout/exercise-add-sheet";
 import { FullscreenSetLogger } from "@/components/workout/fullscreen-set-logger";
+import { ExerciseInfoPanel } from "@/components/workout/exercise-info-panel";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // ─── Page ───────────────────────────────────────
@@ -182,6 +184,15 @@ export default function LiveSessionPage({
           return;
         }
 
+        // Fetch trainer notes for this client's exercises
+        const allExerciseIds = fullTemplate.blocks.flatMap((b: any) =>
+          b.exercises.map((e: any) => e.exerciseId)
+        );
+        const trainerNotes = await getClientExerciseNotes(
+          "",
+          allExerciseIds
+        ).catch(() => ({} as Record<string, string>));
+
         // Build LiveExercise array from template data
         const liveExercises: LiveExercise[] = [];
 
@@ -194,6 +205,7 @@ export default function LiveSessionPage({
             let progressionNote: string | null = null;
             let suggestedWeightChange: string | null = null;
             let targetWeightKg: number | null = null;
+            let targetRpe: string | null = null;
 
             // Apply progression if applicable
             if (
@@ -221,6 +233,7 @@ export default function LiveSessionPage({
               progressionNote = prog.progressionNote;
               suggestedWeightChange = prog.suggestedWeightChange;
               targetWeightKg = prog.targetWeightKg;
+              targetRpe = prog.targetRpe;
             }
 
             const sets: LiveSet[] = Array.from(
@@ -253,7 +266,7 @@ export default function LiveSessionPage({
               targetWeight,
               tempo: ex.tempo ?? null,
               restSeconds,
-              notes: ex.notes ?? null,
+              notes: [ex.notes, trainerNotes[ex.exerciseId]].filter(Boolean).join("\n\n") || null,
               videoUrl: ex.videoUrl ?? null,
               isSuperset: block.isSuperset,
               supersetGroupLabel: block.isSuperset ? block.label : null,
@@ -262,6 +275,7 @@ export default function LiveSessionPage({
               progressionNote,
               suggestedWeightChange,
               targetWeightKg,
+              targetRpe,
             });
           }
         }
@@ -540,6 +554,14 @@ export default function LiveSessionPage({
           onTick={tickRest}
           onAdjust={adjustRestTime}
           onSkip={stopRest}
+          currentSet={currentSetIndex + 1}
+          totalSets={currentExercise.sets.length}
+          nextExerciseName={
+            currentSetIndex >= currentExercise.sets.length - 1 &&
+            currentExerciseIndex < exercises.length - 1
+              ? exercises[currentExerciseIndex + 1].name
+              : null
+          }
         />
       )}
 
@@ -630,9 +652,14 @@ export default function LiveSessionPage({
                   {currentExercise.position}
                 </Badge>
                 <h2 className="text-lg font-bold">{currentExercise.name}</h2>
+                <ExerciseInfoPanel
+                  exerciseId={currentExercise.exerciseId}
+                  exerciseName={currentExercise.name}
+                  trainerNotes={currentExercise.notes}
+                />
               </div>
 
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground items-center">
                 <span>
                   {currentExercise.targetSets} x {currentExercise.targetReps}
                 </span>
@@ -641,6 +668,18 @@ export default function LiveSessionPage({
                     {currentExercise.targetWeight}
                   </span>
                 )}
+                {currentExercise.targetRpe && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
+                    RPE {currentExercise.targetRpe}
+                  </Badge>
+                )}
+                {currentExercise.targetWeightKg != null &&
+                  currentExercise.previous?.bestE1RM != null &&
+                  currentExercise.previous.bestE1RM > 0 && (
+                    <span className="text-primary/70 font-medium">
+                      {Math.round((currentExercise.targetWeightKg / currentExercise.previous.bestE1RM) * 100)}% of e1RM
+                    </span>
+                  )}
                 {currentExercise.tempo && (
                   <span>Tempo: {currentExercise.tempo}</span>
                 )}
@@ -707,6 +746,7 @@ export default function LiveSessionPage({
                   previousSetInWorkout={setIndex > 0 ? currentExercise.sets[setIndex - 1] : null}
                   targetWeight={currentExercise.targetWeightKg}
                   targetReps={currentExercise.targetReps}
+                  targetRpe={currentExercise.targetRpe}
                   onUpdate={(data) =>
                     updateSet(currentExerciseIndex, setIndex, data)
                   }

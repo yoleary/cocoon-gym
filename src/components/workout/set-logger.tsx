@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollInput } from "./scroll-input";
 
 // ─── Set type display config ─────────────────────
 
@@ -54,7 +55,9 @@ interface SetLoggerProps {
   /** Target reps from program (e.g., "8-12" or "6") */
   targetReps?: string | null;
   weightIncrement?: WeightIncrement;
-  onUpdate: (data: Partial<Pick<LiveSet, "weight" | "reps" | "setType">>) => void;
+  /** Target RPE range from progression (e.g. "7-8") */
+  targetRpe?: string | null;
+  onUpdate: (data: Partial<Pick<LiveSet, "weight" | "reps" | "rpe" | "setType">>) => void;
   onComplete: () => void;
 }
 
@@ -67,6 +70,7 @@ export function SetLogger({
   previousSetInWorkout,
   targetWeight,
   targetReps,
+  targetRpe,
   weightIncrement = 2.5,
   onUpdate,
   onComplete,
@@ -281,25 +285,21 @@ export function SetLogger({
               <Minus className="h-5 w-5" />
             </Button>
 
-            <div className="relative flex-1 min-w-0">
-              <Input
-                type="number"
-                inputMode="decimal"
-                step={weightIncrement}
-                min={0}
-                placeholder={suggestedWeight != null ? String(suggestedWeight) : "kg"}
-                value={set.weight ?? ""}
-                onChange={(e) => handleWeightChange(e.target.value)}
-                disabled={set.completed}
-                className={cn(
-                  "h-12 text-center text-base font-medium tabular-nums pr-7",
-                  set.weight == null && suggestedWeight != null && "placeholder:text-foreground/40"
-                )}
-              />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                kg
-              </span>
-            </div>
+            <ScrollInput
+              value={set.weight ?? ""}
+              step={weightIncrement}
+              min={0}
+              inputMode="decimal"
+              placeholder={suggestedWeight != null ? String(suggestedWeight) : "kg"}
+              onChange={handleWeightChange}
+              onStep={(dir) => stepWeight(dir)}
+              disabled={set.completed}
+              suffix="kg"
+              className={cn(
+                "pr-7",
+                set.weight == null && suggestedWeight != null && "placeholder:text-foreground/40"
+              )}
+            />
 
             <Button
               type="button"
@@ -341,16 +341,17 @@ export function SetLogger({
               <Minus className="h-4 w-4" />
             </Button>
 
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              placeholder={suggestedReps != null ? String(suggestedReps) : "reps"}
+            <ScrollInput
               value={set.reps ?? ""}
-              onChange={(e) => handleRepsChange(e.target.value)}
+              step={1}
+              min={0}
+              inputMode="numeric"
+              placeholder={suggestedReps != null ? String(suggestedReps) : "reps"}
+              onChange={handleRepsChange}
+              onStep={(dir) => stepReps(dir)}
               disabled={set.completed}
               className={cn(
-                "h-12 w-16 text-center text-base font-medium tabular-nums",
+                "w-16",
                 set.reps == null && suggestedReps != null && "placeholder:text-foreground/40"
               )}
             />
@@ -391,6 +392,38 @@ export function SetLogger({
           <Check className="h-6 w-6" />
         </Button>
       </div>
+
+      {/* RPE selector — shown after set is completed */}
+      {set.completed && (
+        <div className="flex items-center gap-2 pl-11">
+          <span className="text-[10px] text-muted-foreground shrink-0">RPE</span>
+          <div className="flex gap-1">
+            {[6, 7, 8, 9, 10].map((rpe) => (
+              <button
+                key={rpe}
+                type="button"
+                onClick={() => {
+                  onUpdate({ rpe: set.rpe === rpe ? null : rpe });
+                  hapticFeedback("light");
+                }}
+                className={cn(
+                  "h-7 w-7 rounded-md text-xs font-medium transition-colors touch-manipulation",
+                  set.rpe === rpe
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {rpe}
+              </button>
+            ))}
+          </div>
+          {targetRpe && !set.rpe && (
+            <span className="text-[10px] text-muted-foreground/60">
+              Target: {targetRpe}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

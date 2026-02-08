@@ -26,6 +26,8 @@ import { Separator } from "@/components/ui/separator";
 import { ProgressionTypeSelector } from "@/components/admin/progression-type-selector";
 import { EditProgramDialog } from "@/components/admin/edit-program-dialog";
 import { UnassignProgramButton } from "@/components/admin/unassign-program-button";
+import { DuplicateProgramButton } from "@/components/admin/duplicate-program-button";
+import { BodyMap } from "@/components/admin/body-map";
 
 export default async function ProgramDetailPage({
   params,
@@ -105,13 +107,17 @@ async function ProgramDetailContent({ programId }: { programId: string }) {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/portal/admin/programs/${programId}/assign`}>
                   <Link2 className="h-4 w-4 mr-1.5" />
                   Assign to Client
                 </Link>
               </Button>
+              <DuplicateProgramButton
+                programId={programId}
+                programName={program.name}
+              />
               <EditProgramDialog
                 programId={programId}
                 currentName={program.name}
@@ -237,6 +243,19 @@ async function ProgramDetailContent({ programId }: { programId: string }) {
           ))
         )}
       </div>
+
+      {/* Muscle Coverage */}
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Muscle Coverage</CardTitle>
+          <CardDescription>
+            Visualizes which muscle groups are targeted across all workouts
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BodyMap programId={programId} />
+        </CardContent>
+      </Card>
 
       {/* Assignments */}
       {program.assignments.length > 0 && (

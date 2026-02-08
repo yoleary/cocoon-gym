@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { ServiceWorkerRegister } from "@/components/pwa/sw-register";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,6 +20,11 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
     apple: "/icons/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Cocoon Gym",
   },
 };
 
@@ -38,6 +45,8 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans antialiased`}>
         {children}
+        <ServiceWorkerRegister />
+        <InstallPrompt />
       </body>
     </html>
   );

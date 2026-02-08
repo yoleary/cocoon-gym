@@ -54,6 +54,8 @@ export interface ProgressionResult {
   targetWeightKg: number | null;
   /** Relative change description (e.g. "+5%") if no baseline */
   suggestedWeightChange: string | null;
+  /** Suggested RPE range for this week/progression (e.g. "7-8") */
+  targetRpe: string | null;
 }
 
 // ─── Round to nearest 2.5 ───────────────────────
@@ -98,6 +100,7 @@ export function applyProgression(
       progressionNote: "",
       targetWeightKg: null,
       suggestedWeightChange: null,
+      targetRpe: null,
     };
   }
 
@@ -197,6 +200,29 @@ export function applyProgression(
     }
   }
 
+  // ── RPE guidance based on progression type and week ──
+  let targetRpe: string | null = null;
+  const progressFraction = totalWeeks > 1 ? weeksElapsed / (totalWeeks - 1) : 0;
+
+  switch (progressionType) {
+    case "STRENGTH":
+      // RPE climbs from 7 to 9-10 across the program
+      targetRpe = progressFraction < 0.33 ? "7-8" : progressFraction < 0.66 ? "8-9" : "9-10";
+      break;
+    case "HYPERTROPHY":
+      // Moderate RPE throughout, slight increase in later weeks
+      targetRpe = weekNumber <= halfwayWeek ? "7-8" : "8-9";
+      break;
+    case "ENDURANCE":
+      // Lower RPE, sustained effort
+      targetRpe = progressFraction < 0.5 ? "6-7" : "7-8";
+      break;
+    case "LINEAR":
+      // Steady climb
+      targetRpe = progressFraction < 0.5 ? "7-8" : "8-9";
+      break;
+  }
+
   // Build the display weight string
   let displayWeight = base.targetWeight;
   if (absoluteWeight != null) {
@@ -215,6 +241,7 @@ export function applyProgression(
     progressionNote: note,
     targetWeightKg: absoluteWeight,
     suggestedWeightChange: relativeChange,
+    targetRpe,
   };
 }
 
