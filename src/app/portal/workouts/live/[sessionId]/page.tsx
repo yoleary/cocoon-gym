@@ -541,6 +541,14 @@ export default function LiveSessionPage({
           onTick={tickRest}
           onAdjust={adjustRestTime}
           onSkip={stopRest}
+          currentSet={currentSetIndex + 1}
+          totalSets={currentExercise.sets.length}
+          nextExerciseName={
+            currentSetIndex >= currentExercise.sets.length - 1 &&
+            currentExerciseIndex < exercises.length - 1
+              ? exercises[currentExerciseIndex + 1].name
+              : null
+          }
         />
       )}
 
