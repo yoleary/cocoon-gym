@@ -27,6 +27,7 @@ import { ProgressionTypeSelector } from "@/components/admin/progression-type-sel
 import { EditProgramDialog } from "@/components/admin/edit-program-dialog";
 import { UnassignProgramButton } from "@/components/admin/unassign-program-button";
 import { DuplicateProgramButton } from "@/components/admin/duplicate-program-button";
+import { BodyMap } from "@/components/admin/body-map";
 
 export default async function ProgramDetailPage({
   params,
@@ -242,6 +243,19 @@ async function ProgramDetailContent({ programId }: { programId: string }) {
           ))
         )}
       </div>
+
+      {/* Muscle Coverage */}
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Muscle Coverage</CardTitle>
+          <CardDescription>
+            Visualizes which muscle groups are targeted across all workouts
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BodyMap programId={programId} />
+        </CardContent>
+      </Card>
 
       {/* Assignments */}
       {program.assignments.length > 0 && (
