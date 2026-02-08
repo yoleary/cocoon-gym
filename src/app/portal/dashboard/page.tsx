@@ -26,6 +26,7 @@ import {
   Trophy,
   ChevronRight,
 } from "lucide-react";
+import { OnboardingWizard } from "@/components/portal/onboarding-wizard";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -61,7 +62,7 @@ export default async function DashboardPage() {
       {isTrainer ? (
         <TrainerDashboard userId={userId} />
       ) : (
-        <ClientDashboard userId={userId} />
+        <ClientDashboard userId={userId} userName={user.name} />
       )}
     </div>
   );
@@ -69,13 +70,13 @@ export default async function DashboardPage() {
 
 // ─── Client Dashboard ────────────────────────────────
 
-async function ClientDashboard({ userId }: { userId: string }) {
+async function ClientDashboard({ userId, userName }: { userId: string; userName: string }) {
   const now = new Date();
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - now.getDay());
   weekStart.setHours(0, 0, 0, 0);
 
-  const [weekSessions, streak, totalSessions, recentSessions, prCount] =
+  const [weekSessions, streak, totalSessions, recentSessions, prCount, assignments] =
     await Promise.all([
       db.workoutSession.findMany({
         where: {
@@ -101,6 +102,17 @@ async function ClientDashboard({ userId }: { userId: string }) {
         take: 5,
       }),
       db.personalRecord.count({ where: { userId } }),
+      db.programAssignment.findMany({
+        where: { clientId: userId, active: true },
+        include: {
+          program: {
+            include: {
+              trainer: { select: { name: true } },
+              _count: { select: { templates: true } },
+            },
+          },
+        },
+      }),
     ]);
 
   const weeklyWorkouts = weekSessions.length;
@@ -111,8 +123,22 @@ async function ClientDashboard({ userId }: { userId: string }) {
   const currentStreak = streak?.currentStreak ?? 0;
   const longestStreak = streak?.longestStreak ?? 0;
 
+  // Onboarding data for new users
+  const isNewUser = totalSessions === 0;
+  const assignedPrograms = assignments.map((a) => ({
+    name: a.program.name,
+    weeks: a.program.weeks,
+    templateCount: a.program._count.templates,
+    trainerName: a.program.trainer.name,
+  }));
+
   return (
     <>
+      {/* Onboarding wizard for new users */}
+      {isNewUser && (
+        <OnboardingWizard userName={userName} programs={assignedPrograms} />
+      )}
+
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border/50">
